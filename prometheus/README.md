@@ -8,6 +8,6 @@
 - [004.scrape](004.scrape.md)
 - [005.labels](005.lables.md)
 - [006.storage](006.storage.md)
-- [007.promsql](007.promsql.md)
+- [007.promql](007.promql.md)
 
 - [todo.代理模式](代理模式.md)
