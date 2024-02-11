@@ -6,5 +6,8 @@
 - [002.代码结构](002.代码结构.md)
 - [003.服务发现](003.服务发现.md)
 - [004.scrape](004.scrape.md)
+- [005.labels](005.lables.md)
+- [006.storage](006.storage.md)
+- [007.promsql](007.promsql.md)
 
 - [todo.代理模式](代理模式.md)
