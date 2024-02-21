@@ -79,5 +79,10 @@ prometheus
 
 
 说明：  
-- `Agent`模式:  目前最流行的全局视图解决方案就是远程写入`Remote Write`。`Agent`模式优化了远程写入方案。`Prometheus` 在`Agent`模式下,**查询**、**告警**和**本地存储**是被禁用的，开启`TSDB WAL`功能；其他功能保持不变:**抓取逻辑**、**服务发现**等。 详见[**Agent模式**](./代理模式.md)
-- `Scrape discovery manager` 与 `Scrape manager` 关系： `Scrape discovery manager`负责服务发现，会不断获取当前最新的服务地址、数量等信息；`Scrape manager`会根据`Scrape discovery manager`获取的节点信息，更新需要采集的`targets`，实现采集。`Notify discovery manager`与` Notifier`亦同
+- `Agent`模式:  目前最流行的全局视图解决方案就是远程写入`Remote Write`。`Agent`模式优化了远程写入方案。`prometheus` 在`Agent`模式下,**查询**、**告警(`Rule manager`、`Notifier`)**和**本地存储(`Rule manager`、`TSDB`)**是被禁用的，开启`TSDB WAL`功能；其他功能保持不变:**抓取逻辑**、**服务发现**等。 详见[**Agent模式**](./代理模式.md)
+- `Scrape discovery manager`负责服务发现，会不断获取当前最新的服务地址、数量等信息；
+- `Scrape manager`组件会通过`Scrape discovery manager`组件获取的服务节点信息，更新需要采集的`targets`，进行采集指标
+- `Rule manager`:`prometheus`进行规则管理的组件。分为两类规则：
+  - `RecordingRule` 表达式规则，用于记录到tsdb;
+  - `AlertingRule`  告警规则,触发告警
+- `Termination handler`: 监听信号`os.Interrupt`(注：`ctrl+c`，`kill -2 pid` )、`syscall.SIGTERM`(注：`kill -15  pid`),则优雅地退出`prometheus`进程。
