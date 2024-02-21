@@ -14,7 +14,7 @@ prometheus
   │      ├── aws           aws服务发现模块
   │      ├── kubernetes    kubernetes服务发现模块
   │      ├── manager.go    
-         ├── registry.go
+  │      ├── registry.go
   │      ....
   ├── model   
   ├── notifier              notifier 告警模块
@@ -29,6 +29,11 @@ prometheus
   └── util    
 
 ```
+
+## main
+在`prometheus`中，`main`函数除了是`prometheus`程序的入了之外入口
+
+
 
 
 
