@@ -73,9 +73,16 @@ prometheus
 ## 2.2 main函数执行
 
 ### 2.2.1 执行流程图  
+
 <br/> 
 
+`prometheus` 启动流程  
+
 ![main函数执行](./src/prometheus-main-执行.drawio.png)
+
+
+`prometheus` 流程  
+
 
 
 说明：  
@@ -85,4 +92,6 @@ prometheus
 - `Rule manager`:`prometheus`进行规则管理的组件。分为两类规则：
   - `RecordingRule` 表达式规则，用于记录到tsdb;
   - `AlertingRule`  告警规则,触发告警
-- `Termination handler`: 监听信号`os.Interrupt`(注：`ctrl+c`，`kill -2 pid` )、`syscall.SIGTERM`(注：`kill -15  pid`),则优雅地退出`prometheus`进程。
+- `Notifier`：用于向 `Alertmanager` 发送告警通知
+- `Termination handler`: 监听信号`os.Interrupt`(注：`ctrl+c`，`kill -2 p<prometheus pid>` )、`syscall.SIGTERM`(注：`kill -15  <prometheus pid>`),则优雅地退出`prometheus`进程。
+- `Reload handler`: 监听信号`syscall.SIGHUP`(注：`kill -HUP  <prometheus pid>`，`kill -1  <prometheus pid>` ),则重新加载配置文件。
