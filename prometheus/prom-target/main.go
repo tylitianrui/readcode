@@ -20,32 +20,19 @@ var (
 		},
 		[]string{"method", "path", "code"}, // labels
 	)
-	// cpu
-	avgLoad1 = prometheus.NewGauge(prometheus.GaugeOpts{
 
-		Name:        "tyltr_sys_avg_load1",
-		Help:        "系统负载",
-		ConstLabels: map[string]string{},
-	})
-	avgLoad5 = prometheus.NewGauge(prometheus.GaugeOpts{
-
-		Name:        "tyltr_sys_avg_load5",
-		Help:        "系统负载",
-		ConstLabels: map[string]string{},
-	})
-	avgLoad15 = prometheus.NewGauge(prometheus.GaugeOpts{
-
-		Name:        "tyltr_sys_avg_load15",
-		Help:        "系统负载",
-		ConstLabels: map[string]string{},
-	})
+	avgLoad = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "tyltr_sys_avg_load",
+			Help: "系统负载",
+		},
+		[]string{"min"},
+	)
 )
 
 func InitPrometheusCollector() {
 	prometheus.MustRegister(requestTotal)
-	prometheus.MustRegister(avgLoad1)
-	prometheus.MustRegister(avgLoad5)
-	prometheus.MustRegister(avgLoad15)
+	prometheus.MustRegister(avgLoad)
 }
 
 func main() {
@@ -135,8 +122,8 @@ func CpuUseGauge() {
 	if err != nil {
 		return
 	}
-	avgLoad1.Set(loadInfo.Load1)
-	avgLoad5.Set(loadInfo.Load5)
-	avgLoad15.Set(loadInfo.Load15)
+	avgLoad.WithLabelValues("1").Set(loadInfo.Load1)
+	avgLoad.WithLabelValues("5").Set(loadInfo.Load5)
+	avgLoad.WithLabelValues("15").Set(loadInfo.Load15)
 
 }
