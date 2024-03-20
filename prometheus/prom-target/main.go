@@ -53,9 +53,49 @@ func main() {
 	NewApiServer()
 }
 
+type Wrapper struct {
+}
+
+func (h *Wrapper) printReq(r *http.Request) {
+	fmt.Println("\n\r\n\r\n\r")
+	fmt.Println("method:", r.Method)
+	fmt.Println("url:", r.Host+r.URL.String())
+	if len(r.Header) > 0 {
+		fmt.Println("-----Query start------")
+	}
+	for k, v := range r.Header {
+		if len(v) == 1 {
+			fmt.Println(k, "=", v[0])
+		} else {
+			fmt.Println(k, "=", v)
+		}
+
+	}
+	if len(r.Header) > 0 {
+		fmt.Println("-----Query end------")
+	}
+
+	q := r.URL.Query()
+	if len(q) > 0 {
+		fmt.Println("-----Query start------")
+	}
+
+	for k, v := range q {
+		fmt.Println("k:", k, "val:", v)
+	}
+	if len(q) > 0 {
+		fmt.Println("-----Query end------")
+	}
+}
+
+func (h *Wrapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.printReq(r) //  打印请求参数
+	promhttp.Handler().ServeHTTP(w, r)
+}
+
 func NewApiServer() error {
 	go func() {
-		http.Handle("/metrics", promhttp.Handler())
+		http.Handle("/metrics", &Wrapper{})
 		http.ListenAndServe(":9100", nil)
 	}()
 	go func() {
@@ -66,9 +106,7 @@ func NewApiServer() error {
 			case <-ticker.C:
 				CpuUseGauge()
 			}
-
 		}
-
 	}()
 
 	app := gin.Default()
