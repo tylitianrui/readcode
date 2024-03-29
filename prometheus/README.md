@@ -14,6 +14,8 @@
     - [服务发现sd](001.prometheus简述.md#121-服务发现)
     - [数据采集scrape](001.prometheus简述.md#122-数据采集)
     - [数据处理](001.prometheus简述.md#123-数据处理)
+      - 数据类型(todo)
+      - 四种Metric类型
     - [数据处理](001.prometheus简述.md#123-数据处理)
     - [数据存储storage](001.prometheus简述.md#124-数据存储)
     - [查询query](001.prometheus简述.md#125-查询)
