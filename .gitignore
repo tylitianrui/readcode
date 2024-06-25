@@ -1,2 +1,3 @@
 prometheus/prom-target/vendor/
 prometheus/prom-target/.vscode/
+prometheus/grafana/data
