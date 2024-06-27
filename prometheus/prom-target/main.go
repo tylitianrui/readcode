@@ -84,6 +84,7 @@ func NewApiServer() error {
 	go func() {
 		http.Handle("/metrics", &Wrapper{})
 		http.ListenAndServe(":9100", nil)
+		// curl  http://127.0.0.1:9100/metrics
 	}()
 	go func() {
 		ticker := time.NewTicker(time.Second)
