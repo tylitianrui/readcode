@@ -396,17 +396,20 @@ remote_write:
 通过配置`remote_read`，可实现远程读。
 
 
-
 官方文档：https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage
 
 
 ### 1.2.5 查询
 
-todo 
+`Prometheus` 提供了一种功能表达式语言`PromQL`，允许用户实时选择和汇聚时间序列数据。表达式的结果可以在浏览器中显示为图形，也可以显示为表格数据，或者由外部系统通过`HTTP API` 调用。  
+`PromQL`的语法与使用、实践、源码解析，见[PromQL篇](./promql.md)
+
 
 ### 1.2.6 告警
 
-todo
+`Prometheus` 告警功能需要`Prometheus server` 与组件`Alertmanager`共同完成。`Prometheus server`负责触发告警，并将告警推送到`Alertmanager`。`Alertmanager`负责管理和路由警报。
 
+用户需要在`Prometheus Server`上编写告警触发规则。一旦`Prometheus`收集到的指标触发到告警阈值时，`Prometheus`就会生成一个警报，并且通过`http`协议将告警通知发送给`Alertmanager`。  
 
+`Alertmanager`接收到 `Prometheus Server`发来的告警通知之后，会对告警进行处理(例如：去重、分组等)，并且根据其**标签**将警报路由到不同的接收者,例如:`email`,`webhook`等。除此之外，`Alertmanager`支持对特定警报进行静默，直到静默条件恢复才会解除屏蔽。
 
