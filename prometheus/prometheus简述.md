@@ -156,13 +156,72 @@ scrape_configs:
 请求：   
 ```
 curl --location '127.0.0.1:9090/metrics' \
---header 'User-Agent: Prometheus/2.51.0' \
+--header 'User-Agent: Prometheus/2.53.0' \
 --header 'Accept: application/openmetrics-text;version=1.0.0;q=0.5,application/openmetrics-text;version=0.0.1;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=2' \
 --header 'X-Prometheus-Scrape-Timeout-Seconds: 15'
+``` 
+<br>
+可以获取如下数据(截取部分数据)
+
+```shell
+# HELP prometheus_http_requests_total Counter of HTTP requests.
+# TYPE prometheus_http_requests_total counter
+prometheus_http_requests_total{code="200",handler="/"} 0
+prometheus_http_requests_total{code="200",handler="/config"} 0
+prometheus_http_requests_total{code="200",handler="/consoles/*filepath"} 0 0
+prometheus_http_requests_total{code="200",handler="/version"} 0
+
+# HELP prometheus_http_response_size_bytes Histogram of response size for HTTP requests.
+# TYPE prometheus_http_response_size_bytes histogram
+prometheus_http_response_size_bytes_bucket{handler="/metrics",le="100"} 0
+prometheus_http_response_size_bytes_bucket{handler="/metrics",le="1000"} 0
+prometheus_http_response_size_bytes_bucket{handler="/metrics",le="10000"} 218
+
+# HELP prometheus_rule_group_duration_seconds The duration of rule group evaluations.
+# TYPE prometheus_rule_group_duration_seconds summary
+prometheus_rule_group_duration_seconds{quantile="0.01"} NaN
+prometheus_rule_group_duration_seconds{quantile="0.05"} NaN
+prometheus_rule_group_duration_seconds{quantile="0.5"} NaN
+prometheus_rule_group_duration_seconds{quantile="0.9"} NaN
+prometheus_rule_group_duration_seconds{quantile="0.99"} NaN
+prometheus_rule_group_duration_seconds_sum 0
+prometheus_rule_group_duration_seconds_count 0
+
+# HELP prometheus_sd_discovered_targets Current number of discovered targets.
+# TYPE prometheus_sd_discovered_targets gauge
+prometheus_sd_discovered_targets{config="config-0",name="notify"} 0
+prometheus_sd_discovered_targets{config="prometheus",name="scrape"} 1
 ```
 
+这些数据就是一个个的指标(`Metric`)。 
 
-#### 四种Metric类型
+
+#### 指标(`Metric`)
+
+
+##### 指标
+
+`Prometheus`的指标(`Metric`)被统一定义为： 
+
+```
+ <metric name>{<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} 
+```
+
+说明：
+
+- 指标名称(`metric name`)：反映被监控的样本,例如`prometheus_http_requests_total`表示 `Prometheus`接收到的`HTTP`请求数量; 指标名称(metric name)命名必须满足如下规则：
+  - 指标名称必须有字母、数字、下划线或者冒号组成
+  - 不能以数字开头，也就是说必须满足`[a-zA-Z_:][a-zA-Z0-9_:]*`
+  - 冒号`:`不得使用于`exporter`
+- 标签(`label`)反映样本的特征维度,通过这些维度`Prometheus`可以对样本数据进行过滤，聚合等.标签命名必须满足如下规则：
+  - 标签名称必须有字母、数字、下划线或者冒号组成
+  - 标签名称不能以数字开头，也就是说必须满足`[a-zA-Z_:][a-zA-Z0-9_:]*`
+  - 前缀为`__`标签，是为系统内部使用而预留的。
+
+注：`Prometheus`拉取到的指标(`Metric`)形式都是` <metric name>{<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} `的。但在存储上，指标名称(`metric name`)将会以`__name__=<metric name>`的形式保存在数据库中的.例如`prometheus_http_requests_total{code="200",handler="/"}`① 会被转换成 `{__name__ = "prometheus_http_requests_total", code="200",handler="/"}`②。所以①、②是同一时序的不同表示而已。
+
+
+##### 四种`Metric`类型
 
 `Prometheus`采集到的`Metric`类型有四种：`Counter`、`Gauge`、`Histogram`、`Summary`。  
   
@@ -421,11 +480,6 @@ todo
 ### 1.2.6 告警
 
 todo
-
-
-
-
-
 
 
 
