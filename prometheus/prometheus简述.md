@@ -302,33 +302,9 @@ go_gc_duration_seconds{quantile="1"} 0.001552459
 目前，我们已经获取到了相关数据。那么怎么通过标签处理这些数据呢？
 - 通过 `labels`可以实现添加自定义标签  
 - 通过`relabel_configs`配置实现标签修改、过滤、删除等。
-    
 
 
-**案例一**： 添加自定义标签`service_name`. 
-
-```
-global:
-  scrape_interval: 3s 
-  evaluation_interval: 3s
-
-scrape_configs:
-  - job_name: "add_labels_demo"
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: 
-        - "localhost:9090"
-       labels:
-          service_name: srv-1
-      - targets: 
-        - "127.0.0.1:9090"
-       labels:
-          service_name: srv-2
-```
-   
-   
-
-**案例二**： 改写`instance` 标签为 `tyltr`.  
+**demo**： 改写`instance` 标签为 `tyltr`.  
   
 ```
 global:
@@ -357,55 +333,6 @@ scrape_configs:
 
 注： 标签`instance`默认值是标签`__address__`的值，即`localhost:9090`；本次将标签`instance`值更改为`tyltr` 
 
-  
-**Action**   
-   
-
-| relabel_configs action | 修改对象| 说明    |
-| :-----| :---- | :---- | 
-|replace   | label|根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签 | 
-|keep     | target |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集 | 
-|drop	    | target |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与keep相反|
-|labeldrop	||使用regex表达式匹配标签，符合规则的标签将从target实例中移除|
-|labelkeep|	|使用regex表达式匹配标签，仅收集符合规则的target，不符合匹配规则的不收集|
-|labelmap	 | | 根据regex的定义去匹配Target实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|
-
-   
-
-
-**案例三**： 排除`__address__`为`localhost`开头的`targets`  
-   
-`Prometheus`配置了两个`targets` : `localhost:9090`、`127.0.0.1:9090`,移除掉对 `localhost:9090`的监控。原配置如下:  
-  
-```
-global:
-  scrape_interval: 3s 
-  evaluation_interval: 3s
-
-scrape_configs:
-  - job_name: "tyltr_drop"
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ["localhost:9090","127.0.0.1:9090"]
-```
-  
-添加`relabel_configs`配置，如下:  
-  
-```
-global:
-  scrape_interval: 3s 
-  evaluation_interval: 3s
-
-scrape_configs:
-  - job_name: "tyltr_drop"
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ["localhost:9090","127.0.0.1:9090"]
-    relabel_configs:
-      - source_labels: [__address__]
-        regex: localhost.*
-        action: drop
-```
   
 
 官方说明： [relabel_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)
