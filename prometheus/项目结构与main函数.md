@@ -1,4 +1,6 @@
-# 1. 项目结构
+# 项目结构与main函数
+
+## 1. 项目结构
 
 项目代码结构: 
 ```
@@ -29,9 +31,9 @@ prometheus
 
 ```
 
-# 2. main函数分析
+## 2. main函数分析
 
-## 2.1 goroutine管理(第三方依赖)
+### 2.1 goroutine管理(第三方依赖)
 
 代码仓库: [github.com/oklog/run](https://github.com/oklog/run)  
 
@@ -70,9 +72,9 @@ prometheus
 
 
 
-## 2.2 main函数执行
+### 2.2 main函数执行
 
-### 2.2.1 执行流程图  
+#### 2.2.1 执行流程图  
 
 <br/> 
 
