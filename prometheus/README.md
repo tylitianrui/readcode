@@ -20,7 +20,7 @@
     - [数据存储storage](prometheus简述.md#124-数据存储)
     - [查询query](prometheus简述.md#125-查询)
     - [告警alert](prometheus简述.md#125-告警)
-- [项目结构与main函数](项目结构与main函数.md)
+- [prometheus server简述](prometheus_server简述.md)
 - [服务发现](服务发现.md)
 - [scrape](scrape.md)
 - [relabel](relabel.md)

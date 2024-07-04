@@ -1,4 +1,4 @@
-# 项目结构与main函数
+# prometheus server
 
 ## 1. 项目结构
 
@@ -31,9 +31,14 @@ prometheus
 
 ```
 
-## 2. main函数分析
+## 2.prometheus server架构
+todo
 
-### 2.1 goroutine管理(第三方依赖)
+
+
+## 3.prometheus server启动-main函数分析
+
+### 3.1 goroutine管理(第三方依赖)
 
 代码仓库: [github.com/oklog/run](https://github.com/oklog/run)  
 
@@ -72,9 +77,9 @@ prometheus
 
 
 
-### 2.2 main函数执行
+### 3.2 main函数执行
 
-#### 2.2.1 执行流程图  
+#### 3.2.1 执行流程图  
 
 <br/> 
 
