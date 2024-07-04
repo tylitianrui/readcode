@@ -32,7 +32,37 @@ prometheus
 ```
 
 ## 2.prometheus server架构
-todo
+
+### `prometheus server`架构图
+
+![Prometheus server architecture](src/internal_architecture.svg)
+
+
+prometheus server 主要的功能模块：
+
+- `Scrape Discovery Manager` 负责`targets`的服务发现
+- `Scrape Manager` 拉取`targets`监控指标,拉取监控指标的实际工作者
+- `Rule Manager` 规则模块
+- `Storage` 存储模块
+- `Notifier Discovery Manager` 获取告警组件的地址
+- `Notifier` 将告警信息发送给`AlertManager`
+- `PromQL`组件
+
+### Scrape Discovery Manager
+
+`Scrape Discovery Manager`负责`targets`的服务发现，会不断获取`targets`最新的服务地址、数量等信息；并且将最新的`targets`地址同步给 `Scrape Manager`。`Scrape Discovery Manager`独立于`Scrape Manager`的。`Scrape Discovery Manager`将最新的`targets`地址等信息封装成`targetgroup.Group`结构，并且通过`channel`发送给`Scrape Manager`。
+
+TODO
+<!-- 
+1. 说明`Scrape Discovery Manager` 1:1 创建实例与goroutine 进行服务发现
+2. 配置文件更新，重新创建新的实例
+行文逻辑参考：
+3. https://github.com/prometheus/prometheus/blob/main/discovery/README.md
+4. https://github.com/prometheus/prometheus/blob/main/documentation/internal_architecture.md
+-->
+
+
+### Scrape Manager
 
 
 
