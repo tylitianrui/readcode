@@ -52,9 +52,10 @@ prometheus server 主要的功能模块：
 ### Scrape Discovery Manager
 
 在`prometheus`中`target`的服务发现由`Scrape Discovery Manager`进行统一管理的。`Scrape Discovery Manager`维护着`discovery.Discoverer`实例的切片，`discovery.Discoverer`就是服务发现实际的工作者。 
-`Scrape Discovery Manager`会不断获取`targets`最新的服务地址等信息；并且`Scrape Discovery Manager`将最新的`targets`地址等信息封装成`targetgroup.Group`的切片，并且通过`channel`发送给`Scrape Manager`。`Scrape Manager`根据服务发现的结果拉取`target`的指标。
+`Scrape Discovery Manager`会不断获取`targets`最新的服务地址等信息；并且`Scrape Discovery Manager`将最新的`targets`地址等信息封装成`targetgroup.Group`的切片，并且通过`channel`发送给`Scrape Manager`。`Scrape Manager`根据服务发现的结果拉取`target`的指标。 
 
-根据配置文件中服务发现的配置,`prometheus`创建`discovery.Discoverer`实例，并交由`Scrape Discovery Manager`进行管理。配置文件有几个服务发现的配置，就就会创建几个`discovery.Discoverer`实例,每个`discovery.Discoverer`实例都会开启独立的`goroutine`执行服务发现。例如下例: `scrape_configs`有2个`job`，每个`job`中各有一个`kubernetes_sd_configs`。那么`prometheus`创建2个`discovery.Discoverer`实例，开启2个独立的`goroutine`去进行服务发现。
+根据配置文件中服务发现的配置,`prometheus`创建`discovery.Discoverer`实例，并交由`Scrape Discovery Manager`进行管理。配置文件有几个服务发现的配置，就就会创建几个`discovery.Discoverer`实例,每个`discovery.Discoverer`实例都会开启独立的`goroutine`执行服务发现。  
+例如下例: `scrape_configs`有2个`job`，每个`job`中各有一个`kubernetes_sd_configs`。那么`prometheus`创建2个`discovery.Discoverer`实例，开启2个独立的`goroutine`去进行服务发现。
 
 ```yaml
 global:
@@ -107,11 +108,11 @@ scrape_configs:
 
 #### 思考题
 
-1. 如果`kubernetes_sd_configs`包含2个服务发现的配置，那么会创建几个`discovery.Discoverer`实例呢？
+**问题一** 如果`kubernetes_sd_configs`包含2个服务发现的配置，那么会创建几个`discovery.Discoverer`实例呢？  
 
-答案：如果同一个`kubernetes_sd_configs`的2个服务发现的配置相同，则只会创建一个`discovery.Discoverer`实例；如果同一个`kubernetes_sd_configs`的2个服务发现的配置不相同，则会创建2个`discovery.Discoverer`实例。
+**答案**：如果同一个`kubernetes_sd_configs`的2个服务发现的配置相同，则只会创建一个`discovery.Discoverer`实例；如果同一个`kubernetes_sd_configs`的2个服务发现的配置不相同，则会创建2个`discovery.Discoverer`实例。
 
-示例1:`kubernetes_sd_configs`的2个服务发现的配置相同的配置,只会创建一个`discovery.Discoverer`实例
+**示例1**`kubernetes_sd_configs`的2个服务发现的配置相同的配置,只会创建一个`discovery.Discoverer`实例
 
 ```yaml 
 global:
@@ -151,7 +152,7 @@ scrape_configs:
 
 <br>
 
-示例2:`kubernetes_sd_configs`的的2个服务发现的配置不相同(*注：配置中`api_server`不同*)，则会创建2个`discovery.Discoverer`实例
+**示例2**`kubernetes_sd_configs`的的2个服务发现的配置不相同(*注：配置中`api_server`不同*)，则会创建2个`discovery.Discoverer`实例
 
 ```yaml
 global:
@@ -191,11 +192,13 @@ scrape_configs:
 ```
 
 
-   
-
-
-
 ### Scrape Manager
+
+`Scrape Manager`负责的工作：
+- 拉取target的监控指标
+- 将
+TODO
+
 
 
 
