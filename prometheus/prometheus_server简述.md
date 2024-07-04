@@ -37,6 +37,7 @@ prometheus
 
 ![Prometheus server architecture](src/internal_architecture.svg)
 
+注：此图选自[Prometheus官方图片](https://github.com/prometheus/prometheus/blob/main/documentation/images/internal_architecture.svg)
 
 prometheus server 主要的功能模块：
 
