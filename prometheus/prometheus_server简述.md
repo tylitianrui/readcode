@@ -33,7 +33,6 @@ prometheus
 
 ## 2.prometheus server架构
 
-### `prometheus server`架构图
 
 ![Prometheus server architecture](src/internal_architecture.svg)
 
@@ -44,161 +43,38 @@ prometheus server 主要的功能模块：
 - `target`服务发现模块，由`Scrape Discovery Manager`进行管理
 - 拉取监控指标模块，`Scrape Manager`是拉取监控指标的实际工作者
 - 规则模块，由`Rule Manager`管理规则
-- `Storage` 存储模块
+- `Storage` 存储模块。`Fanout Storage`是存储层的代理，屏蔽了底层不同存储的实现。
 - 告警组件服务发现模块，由`Notifier Discovery Manager`进行管理
 - 告警模块:`Notifier` 将告警信息发送给`AlertManager`
 - `PromQL`组件
 
 ### Scrape Discovery Manager
 
-在`prometheus`中`target`的服务发现由`Scrape Discovery Manager`进行统一管理的。`Scrape Discovery Manager`维护着`discovery.Discoverer`实例的切片，`discovery.Discoverer`就是服务发现实际的工作者。 
-`Scrape Discovery Manager`会不断获取`targets`最新的服务地址等信息；并且`Scrape Discovery Manager`将最新的`targets`地址等信息封装成`targetgroup.Group`的切片，并且通过`channel`发送给`Scrape Manager`。`Scrape Manager`根据服务发现的结果拉取`target`的指标。 
+在`prometheus`中`target`的服务发现由`Scrape Discovery Manager`进行统一管理的。`Scrape Discovery Manager`会不断获取`targets`最新的服务地址等信息；并且`Scrape Discovery Manager`将最新的`target`地址等信息封装成`targetgroup.Group`，并且通过`chan map[string][]*targetgroup.Group`发送给`Scrape Manager`。`Scrape Manager`根据服务发现的结果拉取`target`的指标。 
 
-根据配置文件中服务发现的配置,`prometheus`创建`discovery.Discoverer`实例，并交由`Scrape Discovery Manager`进行管理。配置文件有几个服务发现的配置，就就会创建几个`discovery.Discoverer`实例,每个`discovery.Discoverer`实例都会开启独立的`goroutine`执行服务发现。  
-例如下例: `scrape_configs`有2个`job`，每个`job`中各有一个`kubernetes_sd_configs`。那么`prometheus`创建2个`discovery.Discoverer`实例，开启2个独立的`goroutine`去进行服务发现。
+`chan map[string][]*targetgroup.Group`说明：
 
-```yaml
-global:
-  keep_dropped_targets: 100
+- `map`的`key`:   类型`string` 对应配置文件中`job`名称; 
+  
+- `map`的`value`  类型`[]*targetgroup.Group` 表示此`job`所包含的一系列`targetgroup.Group`。在在`prometheus`中，`target`的信息会由一组标签进行描述，节选部分标签例下:
 
-scrape_configs:
-  - job_name: "kubernetes-apiservers"
-    scheme: https
-    kubernetes_sd_configs:
-      - api_server: https://192.168.0.107:6443
-        role: endpoints
-        namespaces:
-          names: ["default"]
-        bearer_token_file: /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-        tls_config:
-          insecure_skip_verify: true
-    bearer_token_file:   /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-    tls_config:
-      insecure_skip_verify: true
-    relabel_configs:
-      - source_labels:
-          [
-            __meta_kubernetes_namespace,
-            __meta_kubernetes_service_name,
-            __meta_kubernetes_endpoint_port_name,
-          ]
-        action: keep
-        regex: default;kubernetes;https
-
-  - job_name: "kubernetes-nodes"
-    scheme: https
-    kubernetes_sd_configs:
-      - api_server: https://192.168.0.107:6443
-        role: node
-        namespaces:
-          names: ["default"]
-        bearer_token_file: /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-        tls_config:
-          insecure_skip_verify: true
-    bearer_token_file:   /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-    tls_config:
-      insecure_skip_verify: true
-    relabel_configs:
-      - action: labelmap
-        regex: __meta_kubernetes_node_label_(.+)
-
+```text
+"__address__": "192.168.0.107:6443",
+"__meta_kubernetes_endpoint_port_name": "https",
+"__meta_kubernetes_endpoint_port_protocol": "TCP", 
+"__meta_kubernetes_endpoint_ready": "true"
 ```
-当配置文件有变化时，`Scrape Discovery Manager`会停止所有当前运行的服务发现`goroutine`，然后创建新的`goroutine`去进行服务发现。
-
-
-#### 思考题
-
-**问题一** 如果`kubernetes_sd_configs`包含2个服务发现的配置，那么会创建几个`discovery.Discoverer`实例呢？  
-
-**答案**：如果同一个`kubernetes_sd_configs`的2个服务发现的配置相同，则只会创建一个`discovery.Discoverer`实例；如果同一个`kubernetes_sd_configs`的2个服务发现的配置不相同，则会创建2个`discovery.Discoverer`实例。
-
-**示例1**`kubernetes_sd_configs`的2个服务发现的配置相同的配置,只会创建一个`discovery.Discoverer`实例
-
-```yaml 
-global:
-  keep_dropped_targets: 100
-
-scrape_configs:
-  - job_name: "kubernetes-apiservers"
-    scheme: https
-    kubernetes_sd_configs:
-      - api_server: https://192.168.0.107:6443
-        role: endpoints
-        namespaces:
-          names: ["default"]
-        bearer_token_file: /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-        tls_config:
-          insecure_skip_verify: true
-      - api_server: https://192.168.0.107:6443
-        role: endpoints
-        namespaces:
-          names: ["default"]
-        bearer_token_file: /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-        tls_config:
-          insecure_skip_verify: true
-    bearer_token_file:   /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-    tls_config:
-      insecure_skip_verify: true
-    relabel_configs:
-      - source_labels:
-          [
-            __meta_kubernetes_namespace,
-            __meta_kubernetes_service_name,
-            __meta_kubernetes_endpoint_port_name,
-          ]
-        action: keep
-        regex: default;kubernetes;https
-```
-
-<br>
-
-**示例2**`kubernetes_sd_configs`的的2个服务发现的配置不相同(*注：配置中`api_server`不同*)，则会创建2个`discovery.Discoverer`实例
-
-```yaml
-global:
-  keep_dropped_targets: 100
-
-scrape_configs:
-  - job_name: "kubernetes-apiservers"
-    scheme: https
-    kubernetes_sd_configs:
-      - api_server: https://192.168.0.107:6443
-        role: endpoints
-        namespaces:
-          names: ["default"]
-        bearer_token_file: /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-        tls_config:
-          insecure_skip_verify: true
-      - api_server: https://192.168.0.107:6442
-        role: endpoints
-        namespaces:
-          names: ["default"]
-        bearer_token_file: /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-        tls_config:
-          insecure_skip_verify: true
-    bearer_token_file:   /Users/ollie/opencode/prometheus/documentation/examples/k8s.token
-    tls_config:
-      insecure_skip_verify: true
-    relabel_configs:
-      - source_labels:
-          [
-            __meta_kubernetes_namespace,
-            __meta_kubernetes_service_name,
-            __meta_kubernetes_endpoint_port_name,
-          ]
-        action: keep
-        regex: default;kubernetes;https
-
-```
+`targetgroup.Group`本质就是**一组描述服务地址的标签**和其他**公共标签**的集合体.
 
 
 ### Scrape Manager
 
 `Scrape Manager`负责的工作：
-- 拉取target的监控指标
-- 将
-TODO
 
+- 拉取target的监控指标
+- 将获取到的指标样本发送个存储模块
+
+`Scrape Manager`通过`chan map[string][]*targetgroup.Group`获取到服务信息。
 
 
 
