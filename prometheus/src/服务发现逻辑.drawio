@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-02-22T13:16:37.471Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="y8X1JfSC2qEzPGHL-HKy" version="23.1.5" type="device">
+<mxfile host="Electron" modified="2024-07-06T21:43:26.311Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.6.1 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="6q7I2txvn3MptWqZApzc" version="24.6.1" type="device">
   <diagram name="第 1 页" id="JD-DyB5TE8ffOVKspvN3">
     <mxGraphModel dx="1434" dy="769" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="0" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
       <root>
@@ -280,17 +280,17 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="jpZLS2aRkfOWzve02EP6-16" value="协程" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="414" y="770" width="60" height="30" as="geometry" />
+        <mxCell id="jpZLS2aRkfOWzve02EP6-16" value="&lt;font color=&quot;#ff6229&quot;&gt;服务发现协程&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="426" y="765" width="104" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="jpZLS2aRkfOWzve02EP6-17" value="协程" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="820" y="780" width="60" height="30" as="geometry" />
+        <mxCell id="jpZLS2aRkfOWzve02EP6-17" value="&lt;font color=&quot;#cc0000&quot;&gt;updater协程&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="820" y="770" width="80" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="jpZLS2aRkfOWzve02EP6-18" value="通过chan updates， 协程间传递&amp;nbsp;[]*targetgroup.Group" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="500" y="965" width="400" height="30" as="geometry" />
+        <mxCell id="jpZLS2aRkfOWzve02EP6-18" value="通过chan updates []*targetgroup.Group&amp;nbsp; &amp;nbsp;传递获取的服务&lt;span style=&quot;background-color: initial;&quot;&gt;地址&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="500" y="975" width="400" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="jpZLS2aRkfOWzve02EP6-20" value="1. 将获取到的&amp;nbsp;[]*targetgroup.Group 更新到legacymanager.Manager的targets字段&amp;nbsp;&lt;br&gt;2. 向legacymanager.Manager的triggerSend 发送信号，触发向scrape组件发送targetgroup" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" parent="1" vertex="1">
-          <mxGeometry x="1080" y="815" width="590" height="30" as="geometry" />
+        <mxCell id="jpZLS2aRkfOWzve02EP6-20" value="1. 将获取到的&amp;nbsp;[]*targetgroup.Group 更新到legacymanager.Manager的targets字段(暂存)&amp;nbsp;&lt;br&gt;2. 向legacymanager.Manager的triggerSend 发送信号，触发sender协程向scrape组件发送targetgroup" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="1090" y="790" width="640" height="30" as="geometry" />
         </mxCell>
         <mxCell id="jpZLS2aRkfOWzve02EP6-24" value="&lt;span style=&quot;font-size: 14px; background-color: initial;&quot;&gt;创建provider，追加到&lt;/span&gt;providers字段&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="965" y="935" width="235" height="30" as="geometry" />
@@ -370,7 +370,7 @@
           <mxGeometry x="170" y="110" width="110" height="30" as="geometry" />
         </mxCell>
         <mxCell id="jpZLS2aRkfOWzve02EP6-57" value="&lt;font color=&quot;#ff0080&quot; style=&quot;font-size: 16px;&quot;&gt;main函数&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="1970" y="100" width="110" height="30" as="geometry" />
+          <mxGeometry x="1974" y="90" width="110" height="30" as="geometry" />
         </mxCell>
         <mxCell id="jpZLS2aRkfOWzve02EP6-58" value="&lt;font color=&quot;#e6e6e6&quot;&gt;TYLTR&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="930" y="1210" width="60" height="30" as="geometry" />
@@ -417,8 +417,29 @@
         <mxCell id="jpZLS2aRkfOWzve02EP6-73" value="&lt;font color=&quot;#e6e6e6&quot;&gt;TYLTR&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="460" y="1195" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="zir37jMu_xdMQBBzx2-t-1" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;注：&lt;br&gt;&lt;/font&gt;&lt;ul style=&quot;font-size: 15px;&quot;&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;黑色 ---&amp;gt;&amp;nbsp; 表示函数执行流程&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;彩色 ---&amp;gt;&amp;nbsp; 表示数据层面上的操作&lt;/font&gt;&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="1">
+        <mxCell id="zir37jMu_xdMQBBzx2-t-1" value="&lt;font style=&quot;font-size: 15px;&quot;&gt;注：&lt;br&gt;&lt;/font&gt;&lt;ul style=&quot;font-size: 15px;&quot;&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;黑色 ---&amp;gt;&amp;nbsp; 表示函数执行流程&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;彩色 ---&amp;gt;&amp;nbsp; 表示数据层面上的操作&lt;/font&gt;&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="260" y="1170" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-1" value="&lt;span style=&quot;box-sizing: border-box; font-weight: var(--base-text-weight-semibold, 600); color: rgb(31, 35, 40); font-family: -apple-system, &amp;quot;system-ui&amp;quot;, &amp;quot;Segoe UI&amp;quot;, &amp;quot;Noto Sans&amp;quot;, Helvetica, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;; font-size: 16px; text-align: left; background-color: rgb(255, 255, 255);&quot;&gt;kubernetes&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="760" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-2" value="&lt;span style=&quot;color: rgb(31, 35, 40); font-family: -apple-system, &amp;quot;system-ui&amp;quot;, &amp;quot;Segoe UI&amp;quot;, &amp;quot;Noto Sans&amp;quot;, Helvetica, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;; font-size: 16px; text-align: left; background-color: rgb(255, 255, 255);&quot;&gt;ec2&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="800" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-3" value="&lt;span style=&quot;color: rgb(31, 35, 40); font-family: -apple-system, &amp;quot;system-ui&amp;quot;, &amp;quot;Segoe UI&amp;quot;, &amp;quot;Noto Sans&amp;quot;, Helvetica, Arial, sans-serif, &amp;quot;Apple Color Emoji&amp;quot;, &amp;quot;Segoe UI Emoji&amp;quot;; font-size: 16px; text-align: left; background-color: rgb(255, 255, 255);&quot;&gt;eureka&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="835" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-4" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;font face=&quot;-apple-system, system-ui, Segoe UI, Noto Sans, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji&quot; color=&quot;#1f2328&quot;&gt;&lt;span style=&quot;font-size: 16px; background-color: rgb(255, 255, 255);&quot;&gt;......&lt;/span&gt;&lt;/font&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="870" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-6" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;flipH=1;labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="320" y="770" width="20" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="Yc0Fu8YplYlWr9wA8VVT-87" target="q7UE9jWP6zJIfa7E6nDX-6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="q7UE9jWP6zJIfa7E6nDX-8" value="各种服务发现协议 具体实现" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="340" y="845" width="106" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
