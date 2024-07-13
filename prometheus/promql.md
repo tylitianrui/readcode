@@ -233,24 +233,54 @@ TODO
 
 ### 内置函数
 
-Prometheus提供了其它大量的内置函数，可以对时序数据进行的处理。
-
+Prometheus提供了其它大量的内置函数，可以对时序数据进行的处理。本部分将列举常见的函数进行说明。其余函数请查看[官方文档](https://prometheus.io/docs/prometheus/latest/querying/functions/)
 
 #### rate
 
-TODO
+函数用于计算在指定时间范围内计数器**平均每秒**的增加量
 
 
 
 #### irate
-TODO
 
+rate函数计算的是样本的**平均**增长速率，没办法很好的反应瞬时**瞬时**增长率。  
+使用：`irate(v range-vector)`
+
+实现计算方法如下：
+
+
+| 时间   | t1  |t2  |t3  |t4 |t5 |t6 |t7 |t8 |
+| :-----| :---- | :---- |:---- |:---- |:---- |:---- |:---- |:---- |
+| 采样 | v1 | v2  |v3  |v4 |v5| v6  |v7  |v8 |
+| irate | -|`(v2-v1)/(t2-t1)`|`(v3-v2)/(t3-t2)` |`(v4-v3)/(t4-t3)` |`(v5-v4)/(t5-t4)`|`(v6-v5)/(t6-t5)`|`(v7-v6)/(t7-t6)` |`(v8-v7)/(t8-t7)` |
+
+注：  t1 、t2、  ... t8  是连续采样的
+
+<br>
+
+示例:  `prometheus_http_requests_total{handler="/metrics"}`再一段时间范围内的采样与`irate(prometheus_http_requests_total{handler="/metrics"}[1m])`的计算结果
+
+| 时间   | 12:20:00  |12:20:15  |12:20:30  |12:20:45 |12:21:00 |12:21:15 |12:21:30 |12:21:45 |12:22:00 |12:22:15 |12:22:30 |12:22:45 |12:23:00 |
+| :-----| :---- | :---- |:---- |:---- |:---- |:---- |:---- |:---- |:---- |:---- |:---- |:---- |:---- |
+| `prometheus_http_requests_total{handler="/metrics"}` | `131` | `132`  |`133`  |`134` |`135`| `146`  |`166`  |`170`  |`218` |`238`| `259`  |`269`  |`270` |
+| `irate(prometheus_http_requests_total{handler="/metrics"}[1m])` | - | `0.0667` | `0.0667` | `0.0667` | `0.0667` | `0.733` |  `1.33` |  `0.267` |  `3.2` | `1.33` | `1.40` | `0.667` | `0.667` | 
+
+**如图所示**
+
+**`prometheus_http_requests_total{handler="/metrics"}`**
+
+![prometheus_http_requests_total_raw.png](./src/prometheus_http_requests_total_raw.png) 
+
+<br>
+
+**`irate(prometheus_http_requests_total{handler="/metrics"}[1m])`**
+![prometheus_http_requests_total_irate.png](./src/prometheus_http_requests_total_irate.png) 
 
 #### increase
 
 TODO
 
-[官方文档](https://prometheus.io/docs/prometheus/latest/querying/functions/)
+
 
 ## 最佳实践
 TODO
