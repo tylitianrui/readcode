@@ -231,6 +231,26 @@ TODO
 
 TODO
 
+### 内置函数
+
+Prometheus提供了其它大量的内置函数，可以对时序数据进行的处理。
+
+
+#### rate
+
+TODO
+
+
+
+#### irate
+TODO
+
+
+#### increase
+
+TODO
+
+[官方文档](https://prometheus.io/docs/prometheus/latest/querying/functions/)
 
 ## 最佳实践
 TODO
