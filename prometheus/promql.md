@@ -235,15 +235,64 @@ TODO
 
 Prometheus提供了其它大量的内置函数，可以对时序数据进行的处理。本部分将列举常见的函数进行说明。其余函数请查看[官方文档](https://prometheus.io/docs/prometheus/latest/querying/functions/)
 
+#### increase
+
+`increase`函数获取区间向量中的第一个和最后一个样本并返回其增长量。  
+
+**使用**：`increase(v range-vector)`  
+
+例如:
+- `increase(prometheus_http_requests_total{handler="/metrics"}[1m])`
+- `increase(prometheus_tsdb_reloads_total{instance='localhost:9090'}[40s])`
+
+**计算方法**
+
+```
+时间区间的最后一个样本 -  时间区间的第一个样本
+```
+示例 
+
+| 时间   | t1  |t2=t1+15s  |t3=t1+30s  |t4=t1+45s |t5=t1+60s |t6=t1+75s |t7=t1+90s |t8=t1+105s |
+| :-----| :---- | :---- |:---- |:---- |:---- |:---- |:---- |:---- |
+| `xxxx_total` | v1 | v2  |v3  |v4 |v5| v6  |v7  |v8 |
+| `increase(xxxx_total[1m])` | -| -| -| -| `v5-v1`| `v6-v2`| `v7-v3`| `v8-v4`|
+
+
 #### rate
 
-函数用于计算在指定时间范围内计数器**平均每秒**的增加量
+函数用于计算在指定时间范围内计数器**平均每秒**的增加量。
 
+**使用**：`rate(v range-vector)`
+
+例如:
+
+- `rate(prometheus_http_requests_total{handler="/metrics"}[1m])`
+- `rate(prometheus_tsdb_reloads_total{instance='localhost:9090'}[40s])`
+
+**计算方法**
+
+```
+(时间区间的最后一个样本 -  时间区间的第一个样本） ➗ 时间区间长度
+```
+示例 
+
+| 时间   | t1  |t2=t1+15s  |t3=t1+30s  |t4=t1+45s |t5=t1+60s |t6=t1+75s |t7=t1+90s |t8=t1+105s |
+| :-----| :---- | :---- |:---- |:---- |:---- |:---- |:---- |:---- |
+| `xxxx_total` | v1 | v2  |v3  |v4 |v5| v6  |v7  |v8 |
+| `increase(xxxx_total[1m])` | -| -| -| -|`(v5-v1)/60s`| `(v6-v2)/60s`| `(v7-v3)/60s`| `(v8-v4)/60s`|
+
+注： 采样间隔15s
+
+
+##### 数据外推
+
+TODO
 
 
 #### irate
 
-rate函数计算的是样本的**平均**增长速率，没办法很好的反应瞬时**瞬时**增长率。  
+`rate`函数计算的是样本的**平均**增长速率，没办法很好的反应瞬时**瞬时**增长率，并且无法避免时间窗口范围内的**长尾问题**。
+`irate`通过区间向量中最后两个两本数据来计算区间向量的增长速率，解决时间窗口内的**长尾问题**，并且提高了瞬时变化的灵敏度。
 使用：`irate(v range-vector)`
 
 实现计算方法如下：
@@ -276,9 +325,6 @@ rate函数计算的是样本的**平均**增长速率，没办法很好的反应
 **`irate(prometheus_http_requests_total{handler="/metrics"}[1m])`**
 ![prometheus_http_requests_total_irate.png](./src/prometheus_http_requests_total_irate.png) 
 
-#### increase
-
-TODO
 
 
 
