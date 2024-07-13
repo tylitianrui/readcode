@@ -303,7 +303,7 @@ TODO
 | 采样 | v1 | v2  |v3  |v4 |v5| v6  |v7  |v8 |
 | irate | -|`(v2-v1)/(t2-t1)`|`(v3-v2)/(t3-t2)` |`(v4-v3)/(t4-t3)` |`(v5-v4)/(t5-t4)`|`(v6-v5)/(t6-t5)`|`(v7-v6)/(t7-t6)` |`(v8-v7)/(t8-t7)` |
 
-注：  t1 、t2、  ... t8  是连续采样的
+注： 采样间隔15s
 
 <br>
 
@@ -325,6 +325,18 @@ TODO
 **`irate(prometheus_http_requests_total{handler="/metrics"}[1m])`**
 ![prometheus_http_requests_total_irate.png](./src/prometheus_http_requests_total_irate.png) 
 
+
+
+##### 长尾问题的解决
+
+`rate`计算的是均值,会将瞬间峰值**削平**了，无法反映时间窗口内样本数据的快速变化。
+
+`rate`与 `irate`对比图：
+
+![long_tail_rate_demo.png](./src/long_tail_rate_demo.png) 
+
+- 黄色 `irate(prometheus_http_requests_total{handler="/api/v1/status/buildinfo"}[5m])` 
+- 绿色 `rate(prometheus_http_requests_total{handler="/api/v1/status/buildinfo"}[5m])`
 
 
 
