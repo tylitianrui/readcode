@@ -1,14 +1,13 @@
 # prometheus监控外部kubernetes集群配置
 
-## prometheus监控外部kubernetes集群配置
 
 静态配置不再赘述，可见[prometheus简述:静态文件配置](./prometheus简述.md#静态文件配置)
 
 为了方便调试`prometheus`代码，`prometheus`在本地运行、debug，监控`kubernetes`集群。 针对`kubernetes`集群外部部署(或运行的)`prometheus` 首先需要创建`token` ,这样`prometheus`能够访问`kubernetes`集群的`apiserver`获取监控数据。
 
-### 步骤1：创建`token`,即创建`prometheus`访问权限
+## 步骤1：创建`token`,即创建`prometheus`访问权限
 
-#### 1.1 在`kubernetes`集群`master`节点上创建文件 [`rbac-setup.yaml`](https://github.com/prometheus/prometheus/blob/v2.53.0/documentation/examples/rbac-setup.yml) 
+### 1.1 在`kubernetes`集群`master`节点上创建文件 [`rbac-setup.yaml`](https://github.com/prometheus/prometheus/blob/v2.53.0/documentation/examples/rbac-setup.yml) 
   
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -63,7 +62,7 @@ subjects:
 
 ```
 
-#### 1.2 `kubernetes`集群`master`节点上执行`kubectl  apply  -f  rbac-setup.yaml`  
+### 1.2 `kubernetes`集群`master`节点上执行`kubectl  apply  -f  rbac-setup.yaml`  
   
 ```shell
 $ kubectl  apply  -f rbac-setup.yaml
@@ -74,11 +73,11 @@ secret/prometheus-sa-token created
 clusterrolebinding.rbac.authorization.k8s.io/prometheus created
 ```
 
-### 步骤2: 获取`token`
+## 步骤2: 获取`token`
 
 [步骤1](#步骤1创建token即创建prometheus访问权限)创建`rbac`时，是在`namespace:default`下进行的。作用可以直接省略 `-n default` 参数
 
-#### 2.1  获取`token`名称 
+### 2.1  获取`token`名称 
 
 `kubernetes`集群`master`节点上执行`kubectl get secret`
 
@@ -92,7 +91,7 @@ prometheus-sa-token   kubernetes.io/service-account-token   3      46s
 `prometheus-sa-token` 就是刚才创建的`token`名称。
 <br>
 
-#### 2.2 获取`token`内容
+### 2.2 获取`token`内容
 
  `kubernetes`集群`master`节点上,执行`kubectl  describe secrets  prometheus-sa-token` 
   
@@ -115,11 +114,11 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6InhJaVZJS1g1aTgtZ2JGY0Z3dWNoR0FhV3hOMzVI
 ```
 <br>
 
-#### 2.3 将`token`保存本地文件内 
+### 2.3 将`token`保存本地文件内 
 
 将`token`保存本地文件内，文件名字任意。作者将其保存在prometheus项目文件中`documentation/examples/k8s.token`(绝对路径:`/Users/tyltr/opencode/prometheus/documentation/examples/k8s.token`)
 
-### 步骤3：获取`kubernetes`集群的`api server`的地址  
+## 步骤3：获取`kubernetes`集群的`api server`的地址  
 
 在`kubernetes`集群`master`节点上,执行`cat ~/.kube/config | grep server` 
 
@@ -132,7 +131,7 @@ server: https://192.168.0.107:6443
 注：`https://192.168.0.107:6443` 就是 `kubernetes`集群的`api server`的地址
 
 
-### 步骤4: `prometheus`配置文件
+## 步骤4: `prometheus`配置文件
 
 `prometheus`配置文件,作者命名为`k8s-prometheus.yaml`,内容如下：
 
@@ -195,5 +194,3 @@ scrape_configs:
 即可在`web ui`上观察到`target`列表  
 
 ![k8s-demo](src/k8s-prometheus-demo.png)
-
-
