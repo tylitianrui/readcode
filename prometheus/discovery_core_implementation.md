@@ -1,15 +1,5 @@
 
 
-# 服务发现实现
-
-![discovery core logic](src/服务发现逻辑.drawio.png "discovery core logic")  
-<br/>  
-
-<!--
-配置文件解析     》  获取target 
-               》  暂存target 
-			   》  Discovery Manager  run   》 scrape
-  -->
 
 # 配置文件解析
 

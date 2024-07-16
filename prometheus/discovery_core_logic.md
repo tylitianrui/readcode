@@ -71,18 +71,17 @@ type provider struct {
 }
 
 ```
+
 重要字段：
-- `d   discovery.Discoverer`  各种协议的服务发现，如果k8s，d就是[`kubernetes.Discovery`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/kubernetes/kubernetes.go#L263)，
+
+- `d discovery.Discoverer`： `prometheus`支持多种服务发现的协议, 每种协议的实际“工作者”都必须实现`discovery.Discoverer`接口。`provider.d` 也就是一个个的服务发现的实际“执行者”。如果k8s，d就是[`kubernetes.Discovery`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/kubernetes/kubernetes.go#L263)，
 
 
 
-## discovery.Discoverer
-TODO 
+## discovery.Discoverer接口
 
+`prometheus`支持多种服务发现的协议，所以需要为每种协议创建不同的对象来负责具体的服务发现。 例如:`kubernetes_sd_configs`协议对应的是[`kubernetes.Discovery`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/kubernetes/kubernetes.go#L263)；`ec2_sd_config`协议对应的是[`aws.EC2Discovery`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/aws/ec2.go#L146)等，
 
-##  服务发现协程`discovery goroutine`
-
-`discovery`协程主要工作就是进行**服务发现**,获取`targets`拉取`metric`的地址。实际环境中，被监控的target众多，每个target的协议各不相同。所以需要为每种协议创建不同的对象来负责具体的服务发现。 例如:`kubernetes_sd_configs`协议对应的是[`kubernetes.Discovery`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/kubernetes/kubernetes.go#L263)；`ec2_sd_config`协议对应的是[`aws.EC2Discovery`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/aws/ec2.go#L146)等，
 
 虽然是不同对象负责不同协议的服务发现，但每种协议的服务发现对象必须都实现[`discovery.Discoverer`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/discovery.go#L35)接口。 `discovery.Discoverer`定义如下:
 
@@ -102,9 +101,19 @@ type Discoverer interface {
 	Run(ctx context.Context, up chan<- []*targetgroup.Group)
 }
 ```
+
 <br> 
 
 `discovery.Discoverer`接口只有一个方法`Run(ctx context.Context, up chan<- []*targetgroup.Group)`。其中参数`up chan<- []*targetgroup.Group`是`discovery`协程与`updater`协程交互的"渠道"。`discovery`协程会将服务发现的结果封装成`[]*targetgroup.Group`发送到`updater`协程。
+
+
+## 服务发现协程`discovery goroutine`
+
+`discovery`协程主要工作就是进行**服务发现**,获取`targets`拉取`metric`的地址。
+
+
+`discovery.Discoverer`接口有一个方法`Run(ctx context.Context, up chan<- []*targetgroup.Group)`。`discovery`执行的就是这个`Run`方法，并通过`up chan<- []*targetgroup.Group`将服务发现的结果发送到`updater`协程。
+
 
 <br>
 
@@ -190,5 +199,12 @@ type poolKey struct {
 ## 发送协程`sender goroutine`
 
 `sender`协程接受到`triggerSend`(类型`chan struct{}`)发来的信息，得知服务发现有新的更新。`sender`协程在`Discovery Manager`实例的`targets`字段里获取**全部**的服务发现信息。将服务发现的结果通过`syncCh chan map[string][]*targetgroup.Group`发送给`scrape`模块。
+
+
+# 核心逻辑代码解析
+
+代码执行图
+
+![discovery core logic](src/服务发现逻辑.drawio.png "discovery core logic")  
 
 
