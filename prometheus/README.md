@@ -21,7 +21,7 @@
     - [查询query](prometheus简述.md#125-查询)
     - [告警alert](prometheus简述.md#125-告警)
 - [prometheus server简述](prometheus_server简述.md)
-- [服务发现](服务发现.md)
+- [服务发现](discovery_k8s_config.md)
   - [prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
   - [prometheus服务发现的核心逻辑](discovery_core_logic.md)
   - [prometheus服务发现的实现](discovery_core_implementation.md)
