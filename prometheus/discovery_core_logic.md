@@ -203,18 +203,19 @@ type poolKey struct {
 
 需要注意，服务发现的逻辑中定义了很多`map[string][]*targetgroup.Group`结构。`syncCh chan map[string][]*targetgroup.Group`中的`map[string][]*targetgroup.Group`：
 
-- `key`,类型`string`。`prometheus`配置文件中的`job_name`
+- `key`,类型`string`。`prometheus`配置文件中的`job_name`，例如下面的配置中[`job_name: "prometheus"`](https://github.com/prometheus/prometheus/blob/v2.53.0/documentation/examples/prometheus.yml#L23)
 
-```yaml
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
-scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: "prometheus"
 
-    # metrics_path defaults to '/metrics'
-```
-[完整的配置文件](https://github.com/prometheus/prometheus/blob/v2.53.0/documentation/examples/prometheus.yml#L23)
+>  ```yaml
+>  # A scrape configuration containing exactly one endpoint to scrape:
+>  # Here it's Prometheus itself.
+>  scrape_configs:
+>    # The job name is added as a label `job=<job_name>` to any timeseries scraped from this >  config.
+>    - job_name: "prometheus"
+>  
+>      # metrics_path defaults to '/metrics'
+>  ```
+
 
 - `value`，类型 `[]*targetgroup.Group`, 每个`job_name`下的所有服务发现的**地址信息**、标签信息等。`scrape`模块就是根据这些地址信息去拉取指标的。
 
