@@ -28,6 +28,10 @@
 - `reloader`协程( 注：*运行的函数[func (m *Manager) reloader() ](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/manager.go#L139)* ) **定期**地尝试在`Scrape.Manager`的`triggerReload`(类型`chan struct{}` )获取`reload`信号。如果获取到`reload`信号说明，`target`有变化,需要重新加载`target`并启动新的拉取工作。这个`reload`过程由`func (m *Manager) reload()`实现的.
 
 
+### label与relabeling
+
+在**拉取指标之前**，会先根据配置文件中`relabel_configs`配置项设置标签。这一部分由[`func PopulateLabels(lb *labels.Builder, cfg *config.ScrapeConfig, noDefaultPort bool) (res, orig labels.Labels, err error)`](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/target.go#L422)。 具体解析见[Label与ReLabeling](./label_relabeling.md)
+
 
 
 
