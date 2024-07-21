@@ -9,6 +9,13 @@
 
 
 
+## scrape模块核心逻辑
+
+![scrape模块执核心逻辑](./src/scape流程.svg)
+
+
+
+
 ## 管理、更新待拉取的目标
 
 在`Prometheus`中由`Scrape.Manager`(定义文件`scrape/manager.go`) 管理监控对象。
