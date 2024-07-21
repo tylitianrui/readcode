@@ -7,11 +7,26 @@
 - **拉取metrics** : 发起`http(s)`请求,拉取监控指标
 - **调用存储**: 将拉取的数据`append`到`storage`模块。`storage`模块负责存储。
 
-
+注：本章节中代码中会大量出现`Manager`的方法，例如`func (m *Manager) reload()`。若无说明，此`Manager`指的是`Scrape.Manager`
 
 ## scrape模块核心逻辑
 
 ![scrape模块执核心逻辑](./src/scape流程.svg)
+
+
+### 更新和管理target
+
+由[服务发现的核心逻辑](./discovery_core_logic.md)可知，`discovery`模块通过`syncCh chan map[string][]*targetgroup.Group`向`scrape模块`同步服务发现的结果( *即:`map[string][]*targetgroup.Group`,`key`为`job_name`,`value`为每个`job`对应的`target`地址等信息* )。  
+<br>
+
+这个过程主要涉及三个部分：
+
+- 服务发现的地址等信息由`Scrape.Manager`实例进行管控。暂存于`Scrape.Manager`的`targetSets`(*类型:`map[string][]*targetgroup.Group`*)字段中。 
+
+- `scrape模块`启动`update`协程 ( 注：*这个协程执行的函数[func (m *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) error](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/manager.go#L116)* )。`update`协程监听`syncCh chan map[string][]*targetgroup.Group`并且将结果更新到`Scrape.Manager`的`targetSets`字段，然后向`Scrape.Manager`的`triggerReload`字段(类型：`chan struct{}`)发送`reload`信号。
+
+- `reloader`协程( 注：*运行的函数[func (m *Manager) reloader() ](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/manager.go#L139)* ) **定期**地尝试在`Scrape.Manager`的`triggerReload`(类型`chan struct{}` )获取`reload`信号。如果获取到`reload`信号说明，`target`有变化,需要重新加载`target`并启动新的拉取工作。这个`reload`过程由`func (m *Manager) reload()`实现的.
+
 
 
 
