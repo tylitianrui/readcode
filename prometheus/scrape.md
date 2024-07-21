@@ -34,6 +34,15 @@
 
 
 
+### 拉取metrics
+
+`scrape`模块会为每个`job_name`创建独立的`scrapePool`。`scrapePool`负责此`job_name`的拉取指标的工作。每一个`job_name`下，会有一个或多个的`target`。`scrapePool`会为每个具体的`target`创建独立的`scrapeLoop`去拉取指标。
+
+
+### 调用`storage`模块函数存储指标
+
+在**拉取指标之后**，`scrape模块`会执行[func (sl *scrapeLoop) append(app storage.Appender, b []byte, contentType string, ts time.Time) (total, added, seriesAdded int, err error)](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/scrape.go#L1466)函数，调用`storage`模块函数(例如[app.AppendHistogram](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/scrape.go#L1638)、[app.Append](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/scrape.go#L1643)) `append` 指标数据。
+
 
 ## 管理、更新待拉取的目标
 
