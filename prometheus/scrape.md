@@ -30,7 +30,7 @@
 
 ### label与relabeling
 
-在**拉取指标之前**，会先根据配置文件中`relabel_configs`配置项设置标签。这一部分由[`func PopulateLabels(lb *labels.Builder, cfg *config.ScrapeConfig, noDefaultPort bool) (res, orig labels.Labels, err error)`](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/target.go#L422)。 具体解析见[Label与ReLabeling](./label_relabeling.md)
+在**拉取指标之前**，会先根据配置文件中`relabel_configs`配置项设置标签。这一部分由函数[`func PopulateLabels(lb *labels.Builder, cfg *config.ScrapeConfig, noDefaultPort bool) (res, orig labels.Labels, err error)`](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/target.go#L422)实现的。 具体解析见[Label与ReLabeling](./label_relabeling.md)
 
 
 
