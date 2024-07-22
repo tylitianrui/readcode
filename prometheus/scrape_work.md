@@ -173,8 +173,65 @@ TODO
 
 ### `scrape.scrapeLoop`
 
+`scrape.scrapeLoop` 实现了 `scrape.loop`接口，是拉取指标的`loop`实体。
 
-TODO
+文件: [`scrape/scrape.go`](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/scrape.go#L812)
+
+```go
+type scrapeLoop struct {
+    scraper                  scraper
+    l                        log.Logger
+    cache                    *scrapeCache
+    lastScrapeSize           int
+    buffers                  *pool.Pool
+    offsetSeed               uint64
+    honorTimestamps          bool
+    trackTimestampsStaleness bool
+    enableCompression        bool
+    forcedErr                error
+    forcedErrMtx             sync.Mutex
+    sampleLimit              int
+    bucketLimit              int
+    maxSchema                int32
+    labelLimits              *labelLimits
+    interval                 time.Duration
+    timeout                  time.Duration
+    scrapeClassicHistograms  bool
+
+    // Feature flagged options.
+    enableNativeHistogramIngestion bool
+    enableCTZeroIngestion          bool
+
+    appender            func(ctx context.Context) storage.Appender
+    symbolTable         *labels.SymbolTable
+    sampleMutator       labelsMutator
+    reportSampleMutator labelsMutator
+
+    parentCtx   context.Context
+    appenderCtx context.Context
+    ctx         context.Context
+    cancel      func()
+    stopped     chan struct{}
+
+    disabledEndOfRunStalenessMarkers bool
+
+    reportExtraMetrics  bool
+    appendMetadataToWAL bool
+
+    metrics *scrapeMetrics
+
+    skipOffsetting bool // For testability.
+}
+```
+**主要字段**：
+
+| 字段名   | 类型    |说明 |
+| :-----| :---- | :---- |
+| `scraper`  |`scraper` | 封装了http请求target，获取指标的过程 |
+| `cache` |`*scrapeCache` | |
+| `appender`  |`func(ctx context.Context) storage.Appender` |获取存储模块的存储实例，用于指标存储|
+
+
 
 ### `scrape.scrapeCache`
 
