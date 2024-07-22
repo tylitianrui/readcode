@@ -46,6 +46,75 @@ type Manager struct {
 | `targetSets`   |`map[string][]*targetgroup.Group` | 服务发现模块会将当前最新的监控对象封装成`map[string][]*targetgroup.Group`，通过`channel`(注：`channel`的类型`chan map[string][]*targetgroup.Group`)发送给`scrape.Manager`。<br/>   `scrape.Manager`会把接收到的信息暂存在`targetSets`字段。<br/>  `map`的`key`是`job_name`,<br/>  `map`的`value`就是对应的监控对象信息 |
 | `triggerReload`  |`chan struct{}`  | 用于传递热更新信号，<br/>  `scrape.Manager`将接收到的信息暂存在`targetSets`字段后，会向`triggerReload`发送更新信号。`scrape.Manager`的`reloader`方法接收到更新信号后，调用更新操作。 |
 
+
+#### Manager.targetSets
+
+`Manager.targetSets`字段类型`map[string][]*targetgroup.Group`,暂存了服务发现的结果，那么“这个结果”都是数据呢？
+
+<br>
+
+`targetgroup.Group`定义：
+
+```golang
+type Group struct {
+    Targets []model.LabelSet  // model.LabelSet 本质是map[string]string
+    Labels model.LabelSet     // model.LabelSet 本质是map[string]string
+    Source string
+}
+```
+
+可见，`targetgroup.Group`底层是`map[string]string`的类型,本质上就是**一组kv的标签**
+
+
+我们以静态文件配置为例进行说明，`prometheus.yml`中`scrape_configs`部分的配置，如下：  
+
+```yaml
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "job-0"
+    metrics_path: '/metrics'
+    scheme : 'http'
+    static_configs:
+      - targets: ["127.0.0.1:8520","192.168.0.103:8520"]
+```  
+
+<br/>
+
+那么`Scrape.Manager.targetSets`对应的值为
+
+```json
+{
+    "prometheus": [
+        {
+            "Targets": [
+                {
+                    "__address__": "localhost:9090"
+                }
+            ],
+            "Labels": null,
+            "Source": "0"
+        }
+    ],
+    "job-0": [
+        {
+            "Targets": [
+                {
+                    "__address__": "127.0.0.1:8520"
+                },
+                {
+                    "__address__": "192.168.0.103:8520"
+                }
+            ],
+            "Labels": null,
+            "Source": "0"
+        }
+    ]
+}
+
+```
+
 ### `scrape.scrapePool`
 
 
