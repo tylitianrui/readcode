@@ -117,6 +117,58 @@ scrape_configs:
 
 ### `scrape.scrapePool`
 
+`scrape.Manager`会为每个`job`维护独立的`scrapePool`,`scrapePool`为每个`target`创建独立的`loop`定期向`target`发送`http`请求获取指标。这些`loop`共享`scrapePool`实例的`http client`。  
+
+如果`target`发生更新，`scrapePool`会为新的`target`创建`loop`,关闭失效的`target`的`loop` 
+
+
+文件: [`scrape/scrape.go`](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/scrape.go#L63)
+
+```go
+// scrapePool manages scrapes for sets of targets.
+
+type scrapePool struct {
+    appendable storage.Appendable       // 存储,此接口定义了存储的行为
+    logger     log.Logger
+    cancel     context.CancelFunc
+    httpOpts   []config_util.HTTPClientOption
+
+    // mtx must not be taken after targetMtx.
+    mtx    sync.Mutex
+    config *config.ScrapeConfig       // 抓取的配置
+    client *http.Client               // http client,用于pull指标时 发起http请求
+    loops  map[uint64]loop
+
+    targetMtx sync.Mutex
+    // activeTargets and loops must always be synchronized to have the same
+    // set of hashes.
+    activeTargets       map[uint64]*Target     // 抓取的目标endpoint等信息
+    droppedTargets      []*Target // Subject to KeepDroppedTargets limit.
+    droppedTargetsCount int       // Count of all dropped targets.
+
+    // Constructor for new scrape loops. This is settable for testing convenience.
+    newLoop func(scrapeLoopOptions) loop
+
+    noDefaultPort bool
+
+    metrics *scrapeMetrics       // 监控指标
+}
+```
+
+**主要字段**：
+
+| 字段名   | 类型    |说明 |
+| :-----| :---- | :---- |
+| `appendable`  |`storage.Appendable` | 存储模块的实例 |
+| `loops` |`map[uint64]loop` | 一组`loop`,注:每个`target`都有独立的`loop`，`loop`是接口类型，`scrape.scrapeLoop`结构体实现了`loop`接口，`scrape.scrapeLoop`才是`loop`的实体|
+| `activeTargets`  |`map[uint64]*Target` | 需要抓取指标的一组`target`的信息 <br/> 注:`loops`和`activeTargets`是存在对应关系的，两者都是`kv`结构,`key`都是`target`的哈希值.`loops`和`activeTargets`就是通过哈希值进行关联的|
+| `droppedTargets`|`[]*Target`| 需要丢弃的目标,即不需要抓取的`target`| 
+| `client`   |`*http.Client` | `loop`定期向`target`发送`http`请求获取指标。`client`就是此`http`的客户端|
+
+**思考题**  
+
+1. `activeTargets`、`droppedTargets`都是`Target`集合，为何`activeTargets`以map进行组织，`droppedTargets`选择切片呢？  
+TODO
 
 
 ### `scrape.scrapeLoop`
