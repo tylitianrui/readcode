@@ -14,11 +14,17 @@ prometheus
   ├── discovery            服务发现模块
   │      ├── aws           aws服务发现模块
   │      ├── kubernetes    kubernetes服务发现模块
-  │      ├── manager.go    
+  │      ...   
   │      ├── registry.go
-  │      ....
+  │      ├── discoverer_metrics_noop.go
+  │      ├── discovery.go   
+  │      ├── manager.go
+  │      ├── metrics.go
+  │      ├── metrics_k8s_client.go
+  │      ├── metrics_refresh.go   
+  │      └── util.go   
   ├── model   
-  ├── notifier              notifier 告警模块
+  ├── notifier            notifier 告警模块
   ├── plugins
   ├── prompb
   ├── promql               promql查询实现
