@@ -414,3 +414,23 @@ func (m *Manager) reload() {
 }
 
 ```
+
+### relabel与获取target信息
+TODO
+
+#### relabel解析
+TODO
+
+详见[relabel实践与代码分析](./relabel.md)
+
+
+#### target转换成具体的拉取目标
+TODO
+
+### scrape拉取指标
+
+TODO
+
+
+### 指标存储
+TODO
