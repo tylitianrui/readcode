@@ -7,7 +7,6 @@ scrape模块的关键数据结构如下：
 - [`scrape.Manager`](https://github.com/prometheus/prometheus/blob/v2.53.0/scrape/manager.go#L96) 负责`scrape`模块的核心数据结构，负责管理、更新`target`信息;维护每个`job_name`的`scrapePool`;维护`storage`模块存储实例以便存储指标
 - [`scrape.scrapePool`](https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go#L64) 管理一组`targets`的拉取任务。`prometheus`会为每个`job_name` 创建一个独立的`scrapePool`,负责管理此`job_name`下所有`target`的指标拉取任务。`scrapePool`会为此`job_name`下的所有`target`创建独立的`scrapeLoop`拉取指标
 - [`scrape.scrapeLoop`](https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go#L822) 拉取指标的`loop`,周期性地拉取某一target的指标。[scrape.scrapeLoop](https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go#L822)实现了[loop](https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go#L807)接口。
-- [`scrape.scrapeCache`](https://github.com/prometheus/prometheus/blob/main/scrape/scrape.go#L870) 记录存储过程信息，并且在存储时校验指标的合法性。
   
 ### `scrape.Manager` 
 
@@ -20,21 +19,21 @@ scrape模块的关键数据结构如下：
 // 当通过 discover manager 获取到当前最新的抓取目标的时，scrape.Manager热更新最新的监控目标 并管理scrapePool循环的的启动、关闭  
 
 type Manager struct {
-	opts      *Options
-	logger    log.Logger
-	append    storage.Appendable                      // 存储
-	graceShut chan struct{}                           // 关闭信号
+    opts      *Options
+    logger    log.Logger
+    append    storage.Appendable                      // 存储
+    graceShut chan struct{}                           // 关闭信号
 
-	offsetSeed    uint64     
-	mtxScrape     sync.Mutex 
-	scrapeConfigs map[string]*config.ScrapeConfig    // prometheus.yml配置文件中scrape_configs模块信息: 拉取的target配置的初始值信息,key为job_name
-	scrapePools   map[string]*scrapePool             // 存储了一组拉取指标的实际执行者
-	targetSets    map[string][]*targetgroup.Group    // target更新要拉取的具体target,key为job_name
-	buffers       *pool.Pool
+    offsetSeed    uint64     
+    mtxScrape     sync.Mutex 
+    scrapeConfigs map[string]*config.ScrapeConfig    // prometheus.yml配置文件中scrape_configs模块信息: 拉取的target配置的初始值信息,key为job_name
+    scrapePools   map[string]*scrapePool             // 存储了一组拉取指标的实际执行者
+    targetSets    map[string][]*targetgroup.Group    // target更新要拉取的具体target,key为job_name
+    buffers       *pool.Pool
 
-	triggerReload chan struct{}                      // 传递reload信号的channel，通过监听此channel进行reload操作
+    triggerReload chan struct{}                      // 传递reload信号的channel，通过监听此channel进行reload操作
 
-	metrics *scrapeMetrics                           // 对scrape模块监控指标
+    metrics *scrapeMetrics                           // 对scrape模块监控指标
 }
 ```  
 
@@ -47,7 +46,7 @@ type Manager struct {
 | `triggerReload`  |`chan struct{}`  | 用于传递热更新信号，<br/>  `scrape.Manager`将接收到的信息暂存在`targetSets`字段后，会向`triggerReload`发送更新信号。`scrape.Manager`的`reloader`方法接收到更新信号后，调用更新操作。 |
 
 
-#### Manager.targetSets
+#### `Manager.targetSets`
 
 `Manager.targetSets`字段类型`map[string][]*targetgroup.Group`,暂存了服务发现的结果，那么“这个结果”都是数据呢？
 
@@ -233,15 +232,133 @@ type scrapeLoop struct {
 
 
 
-### `scrape.scrapeCache`
+## HOW TO WORK
+
+### 创建`ScrapeManager`与监听服务发现
+
+**创建`ScrapeManager`实例**  
+
+<br>
+
+```go
+    scrapeManager, err := scrape.NewManager(
+        &cfg.scrape,     // 配置文件中的配置信息
+        log.With(logger, "component", "scrape manager"),
+        fanoutStorage,   // 存储模块的代理，屏蔽底层的存储实现
+        prometheus.DefaultRegisterer,
+    )
+    if err != nil {
+        level.Error(logger).Log("msg", "failed to create a scrape manager", "err", err)
+        os.Exit(1)
+    }
+```
+
+**监听服务发现** 
+
+<br>
+
+```go
+    {
+        // Scrape manager.
+        g.Add(
+            func() error {
+                // When the scrape manager receives a new targets list
+                // it needs to read a valid config for each job.
+                // It depends on the config being in sync with the discovery manager so
+                // we wait until the config is fully loaded.
+                <-reloadReady.C  
+
+                // 监听服务发现
+                err := scrapeManager.Run(discoveryManagerScrape.SyncCh())    
+                level.Info(logger).Log("msg", "Scrape manager stopped")
+                return err
+            },
+
+            func(err error) {
+                // Scrape manager needs to be stopped before closing the local TSDB
+                // so that it doesn't try to write samples to a closed storage.
+                // We should also wait for rule manager to be fully stopped to ensure
+                // we don't trigger any false positive alerts for rules using absent().
+                level.Info(logger).Log("msg", "Stopping scrape manager...")
+                scrapeManager.Stop()
+            },
+        )
+    }
+```
+
+### 更新`targets`
+
+图例  
+
+![scrape流程update_targets](./src/scrape流程update_targets.drawio.svg)
 
 
-TODO
+更新`targets`流程说明：
+
+`Manager.Run`接收到服务发现的结果(`map[string][]*targetgroup.Group`)后： 
+
+- `m.updateTsets(ts)`：把接收到的信息(`targetgroup.Group`)暂存在`m.targetSets`字段
+- `m.triggerReload <- struct{}{}`: `m.triggerReload`发送`reload`信号
+- `go m.reloader()`启动的协程`reloader`，定期(默认5s)轮询 `m.triggerReload`。如果获取到`reload`信号，执行`Manager.reload()` 方法
+  
+
+代码解析：
+
+```go
+// Run receives and saves target set updates and triggers the scraping loops reloading.
+// Reloading happens in the background so that it doesn't block receiving targets updates.
+
+func (m *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) error {
+    go m.reloader() // 协程启动reloader， 监听更新信息
+    // 循环
+    for {
+        select {
+        case ts := <-tsets:   // 在chan tsets 获取到当前最新的拉取对象的信息, chan tsets的send端一般是服务发现组件
+            m.updateTsets(ts) // 更新targets,将 m.targetSets 设置为ts
+
+            select {
+            case m.triggerReload <- struct{}{}:  // 发生reload信号
+            default:
+            }
+
+        case <-m.graceShut:  //  关闭信号
+            return nil
+        }
+    }
+}
 
 
+// 将 m.targetSets 设置为ts
+func (m *Manager) updateTsets(tsets map[string][]*targetgroup.Group) {
+    m.mtxScrape.Lock()
+    m.targetSets = tsets
+    m.mtxScrape.Unlock()
+}
 
 
+// 监听reload信号 触发更新操作
+func (m *Manager) reloader() {
+    reloadIntervalDuration := m.opts.DiscoveryReloadInterval
+    if reloadIntervalDuration < model.Duration(5*time.Second) {
+        reloadIntervalDuration = model.Duration(5 * time.Second)
+    }
 
-## how to work
+    ticker := time.NewTicker(time.Duration(reloadIntervalDuration))
 
-TODO
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-m.graceShut:
+            return
+        case <-ticker.C:  // 定期轮训 m.triggerReload
+            select {
+            case <-m.triggerReload: // 监听到reload信号，执行reload操作
+                m.reload()          // 实际上加载targets的操作
+            case <-m.graceShut:
+                return
+            }
+        }
+    }
+}
+``` 

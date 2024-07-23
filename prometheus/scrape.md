@@ -45,7 +45,7 @@
 
 
 
-
+<!-- 
 
 ### 更新targets   
 
@@ -85,71 +85,6 @@
 
 **Manager.Run方法**  
 
-通过`channel tsets`接收到当前最新的拉取对象的信息(`targetgroup.Group`)后：
-- `go m.reloader()`  启动协程`reloader`，定期(默认5s)轮询 `m.triggerReload`。如果获取到`reload`信号，执行`Manager.reload()` 方法
-- `m.updateTsets(ts)` ： 把接收到的信息(`targetgroup.Group`)暂存在`m.targetSets`字段
-- `m.triggerReload <- struct{}{}`: `m.triggerReload`发送`reload`信号
-  
-
-代码解析：
-
-```go
-// Run receives and saves target set updates and triggers the scraping loops reloading.
-// Reloading happens in the background so that it doesn't block receiving targets updates.
-
-func (m *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) error {
-	go m.reloader() // 协程启动reloader， 监听更新信息
-	// 循环
-	for {
-		select {
-		case ts := <-tsets:   // 在chan tsets 获取到当前最新的拉取对象的信息, chan tsets的send端一般是服务发现组件
-			m.updateTsets(ts) // 更新targets,将 m.targetSets 设置为ts
-
-			select {
-			case m.triggerReload <- struct{}{}:  // 发生reload信号
-			default:
-			}
-
-		case <-m.graceShut:  //  关闭信号
-			return nil
-		}
-	}
-}
-
-
-// 将 m.targetSets 设置为ts
-func (m *Manager) updateTsets(tsets map[string][]*targetgroup.Group) {
-	m.mtxScrape.Lock()
-	m.targetSets = tsets
-	m.mtxScrape.Unlock()
-}
-
-// 监听reload信号 触发更新操作
-func (m *Manager) reloader() {
-	reloadIntervalDuration := m.opts.DiscoveryReloadInterval
-	if reloadIntervalDuration < model.Duration(5*time.Second) {
-		reloadIntervalDuration = model.Duration(5 * time.Second)
-	}
-
-	ticker := time.NewTicker(time.Duration(reloadIntervalDuration))
-
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-m.graceShut:
-			return
-		case <-ticker.C:  // 定期轮训 m.triggerReload
-			select {
-			case <-m.triggerReload: // 监听到reload信号，执行reload操作
-				m.reload()          // 实际上加载targets的操作
-			case <-m.graceShut:
-				return
-			}
-		}
-	}
-}
-``` 
 
 <br/>  
 
@@ -209,37 +144,7 @@ func (m *Manager) reload() {
 
 ### scrapePool 结构体
 
-**定义**
-```go
 
-// scrapePool manages scrapes for sets of targets.
-type scrapePool struct {
-	appendable storage.Appendable       // 存储,此接口定义了存储的行为
-	logger     log.Logger
-	cancel     context.CancelFunc
-	httpOpts   []config_util.HTTPClientOption
-
-	// mtx must not be taken after targetMtx.
-	mtx    sync.Mutex
-	config *config.ScrapeConfig       // 抓取的配置
-	client *http.Client               // http client,用于pull指标时 发起http请求
-	loops  map[uint64]loop
-
-	targetMtx sync.Mutex
-	// activeTargets and loops must always be synchronized to have the same
-	// set of hashes.
-	activeTargets       map[uint64]*Target  // 抓取的目标endpoint等信息
-	droppedTargets      []*Target // Subject to KeepDroppedTargets limit.
-	droppedTargetsCount int       // Count of all dropped targets.
-
-	// Constructor for new scrape loops. This is settable for testing convenience.
-	newLoop func(scrapeLoopOptions) loop
-
-	noDefaultPort bool
-
-	metrics *scrapeMetrics       // 监控指标
-}
-```
 主要字段说明： 
 | 字段名   | 类型  |说明  |备注    |
 | :-----| :---- | :---- | :---- |
@@ -638,4 +543,4 @@ func (sl *scrapeLoop) scrapeAndReport(last, appendTime time.Time, errc chan<- er
 
 
 ```
-
+ -->
