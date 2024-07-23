@@ -361,3 +361,56 @@ func (m *Manager) reloader() {
     }
 }
 ``` 
+
+### 为job创建ScrapePool
+
+`func (m *Manager) reload()`为每个`job_name`创建独立的`ScrapePool`，并将`ScrapePool`实例存储于`Manager.scrapePools`字段中。如图
+
+![scape流程_create_scrapepool](./src/scape流程_create_scrapepool.drawio.svg)
+
+<br>
+
+代码解析  
+
+```go
+func (m *Manager) reload() {
+    m.mtxScrape.Lock()
+    var wg sync.WaitGroup
+    // m.targetSets 暂存的是当前最新的抓取目标，是在 Manager.Run--> Manager.updateTsets(ts) 中进行设置的   
+    // 遍历m.targetSets为每个job创建 scrapePool
+    for setName, groups := range m.targetSets {
+        // check 是否存在jop_name的scrapePools，如果不存在，则创建
+        if _, ok := m.scrapePools[setName]; !ok {
+            // 配置文件中是否存在此job
+            scrapeConfig, ok := m.scrapeConfigs[setName]
+            if !ok {
+                level.Error(m.logger).Log("msg", "error reloading target set", "err", "invalid config id:"+setName)
+                continue
+            }
+            // 为每个job_name创建scrapePool实例
+            m.metrics.targetScrapePools.Inc()  // 创建scrapePool实例,监控指标 +1 
+            sp, err := newScrapePool(scrapeConfig, m.append, m.offsetSeed, log.With(m.logger, "scrape_pool", setName), m.buffers, m.opts, m.metrics)
+            if err != nil {
+                m.metrics.targetScrapePoolsFailed.Inc() // 创建失败,监控指标 +1 
+                level.Error(m.logger).Log("msg", "error creating new scrape pool", "err", err, "scrape_pool", setName)
+                continue
+            }
+            m.scrapePools[setName] = sp
+        }
+
+        // 启动协程，向scrapePool同步最新的Target Group
+        // sp.Sync(groups)  将 Target Group 转换为实际的抓取目标Target，
+        // 同步当前运行的 scraper 和结果集，返回全部抓取和丢弃的目标。
+        wg.Add(1)
+        // Run the sync in parallel as these take a while and at high load can't catch up.
+        go func(sp *scrapePool, groups []*targetgroup.Group) {
+            sp.Sync(groups)
+            wg.Done()
+        }(m.scrapePools[setName], groups)
+
+    }
+    m.mtxScrape.Unlock()
+    wg.Wait()
+}
+
+```
