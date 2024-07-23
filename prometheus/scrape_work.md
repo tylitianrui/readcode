@@ -292,7 +292,6 @@ type scrapeLoop struct {
 
 ![scrape流程update_targets](./src/scrape流程update_targets.drawio.svg)
 
-
 更新`targets`流程说明：
 
 `Manager.Run`接收到服务发现的结果(`map[string][]*targetgroup.Group`)后： 
