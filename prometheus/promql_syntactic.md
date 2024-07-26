@@ -149,13 +149,13 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 #### 比较运算符
 
-`prometheus`支持比较算符 等于(==)、不等于(!=)、大于(>)、大于等于(>=)、小于(<)、小于等于(<=)。只能使用于`instant vector` 和 `Scalar`类型的计算。不能用于`Range vector`（范围向量）。  除了这些比较运算符之外，关键字`bool` 经常配合比较运算符使用。    
+`prometheus`支持比较算符 等于(`==`)、不等于(`!=`)、大于(`>`)、大于等于(`>=`)、小于(`<`)、小于等于(`<=`)。只能使用于`instant vector` 和 `Scalar`类型的计算，不能用于`Range vector`（范围向量）。  
 
-`bool`关键字会直接跟在比较运算符之后，如果比较运算为true，则返回1.否则返回0。应用于告警的场景中，在后续【告警】#TODO 进行说明
+日常工作中，关键字`bool` 经常配合比较运算符使用。`bool`关键字会直接跟在比较运算符之后，如果比较运算为`true`，则返回`1`.否则返回`0`,很适合告警的场景中。在告警场景中,并不需要关心指标值具体是多少，只需关心是否触发告警(即：`true` 或 `false`) 即可。具体应用细节会在[告警](./告警.md)说明。
 
 <br>
 
-**示例:** 比较运算符基本使用   
+##### **示例1:** 比较运算符基本使用   
 
 查询出请求量大于50的指标 ` prometheus_http_requests_total > 50`  如图  
 
@@ -163,11 +163,12 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 <br>
 
-**示例:** bool配合比较运算符使用   
+##### **示例2:** bool配合比较运算符使用
 
-查询请求量大于50的指标,如果大于50，返回1；否则返回0  ` prometheus_http_requests_total >  bool 50`  如图  
+`prometheus_http_requests_total > bool 50` 查询请求量大于`50`的指标,如果大于`50`，返回`1`；否则返回`0`。 如图所示
 
-![prometheus_http_requests_total_greater_50_bool](./src/prometheus_http_requests_total_greater_50_bool.png) 
+![prometheus_http_requests_total_greater_50_bool](./src/prometheus_http_requests_total_greater_50_bool.png)
+
 
 
 #### 逻辑运算符
