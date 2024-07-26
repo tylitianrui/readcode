@@ -22,6 +22,16 @@
   
 <br>
 
+使用方法
+```
+<aggr-op> [without|by (<label list>)] ([parameter,] <vector expression>)
+```
+或者
+```
+<aggr-op>([parameter,] <vector expression>) [without|by (<label list>)]
+```
+
+
 ### sum
 
 TODO
@@ -31,6 +41,42 @@ TODO
 ### avg
 
 TODO
+
+### 分组by
+
+使用关键字 `by`进行分组
+  
+例如: 获取请求`/api/v1/query`的请求总数量
+
+```text
+sum(prometheus_http_requests_total{handler="/api/v1/query"})
+
+```
+
+  ![prometheus_http_requests_total_sum](./src/prometheus_http_requests_total_sum.png)  
+
+*注：如果prometheus里暂时没有监控数据，可以手动向prometheus发请求，使prometheus获得http监控数据。例如：*
+
+```shell
+
+curl -X OPTIONS  http://127.0.0.1:9090/api/v1/query  
+curl -X PUT http://127.0.0.1:9090/api/v1/query
+curl   http://127.0.0.1:9090/api/v1/query  
+
+```
+
+针对上例，获取请求`/api/v1/query`的请求总数量,并且以状态码分组统计  
+
+```shell
+
+sum(prometheus_http_requests_total{handler="/api/v1/query"}) by (code)
+
+```
+
+  ![prometheus_http_requests_total_sum](./src/prometheus_http_requests_total_sum_by_code.png)  
+
+
+
 
 ## 内置函数
 
