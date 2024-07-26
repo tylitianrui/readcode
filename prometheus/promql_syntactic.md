@@ -99,7 +99,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 #### 算数运算符
 
-`prometheus`支持算数运算符加(`+`)、减(`-`)、乘(`*`)、除(`/`)、取模(`%)`、乘方(`^`)。只能使用于`instant vector` 和 `Scalar`类型的计算。不能用于`Range vector`（范围向量），只有双方**标签一致**的才能进行计算。
+`prometheus`支持算数运算符加(`+`)、减(`-`)、乘(`*`)、除(`/`)、取模(`%)`、乘方(`^`)。只能使用于`instant vector` 和 `Scalar`类型的计算。不能用于`Range vector`（范围向量），只有双方**标签一致**的才能进行计算，即[向量匹配](#向量匹配vector-matching)
 
 ##### **示例1**：算数运算符基本使用  
 
@@ -123,7 +123,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 ##### **示例3** 标签匹配
 
-`instant vector` 与 `instant vector`之间使用算数运算时，会将左侧`instant vector`的标签与右侧`instant vector`的标签进行对比，只有两者标签相同，才能进行算数运算输出结果. 
+`instant vector` 与 `instant vector`之间使用算数运算时，会将左侧`instant vector`的标签与右侧`instant vector`的标签进行对比，只有两者标签相同，才能进行算数运算输出结果，即[向量匹配](#向量匹配vector-matching). 
 <br>
 
 
@@ -138,13 +138,13 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 ##### **示例4**：不同指标运算
 
-上述示例使用`prometheus_http_requests_total`指标进行演示的，那么不同指标是否可以进行算术运算呢？ 答案当然是可以的，但是必须遵守**标签匹配**的原则
+上述示例使用`prometheus_http_requests_total`指标进行演示的，那么不同指标是否可以进行算术运算呢？ 答案当然是可以的，但是必须遵守**标签匹配**的原则，即[向量匹配](#向量匹配vector-matching). 
 
 不同指标分为如下请求：
 
 - 同一类型的不同指标，例如`go_memstats_mallocs_total + prometheus_engine_query_samples_total`  前后都是`counter`类型
 - 不同类型的指标,例如 `go_gc_cycles_automatic_gc_cycles_total  + go_sched_goroutines_goroutines`,`go_gc_cycles_automatic_gc_cycles_total`是`counter`类型，后者是`gauge`类型
-- `histogram` 和 `summary`只能在本类型之间进行算数运算，因为`histogram`类型中包含特有标签`le`；`summary`类型中包含特有标签`quantile`，无法和其他类型进行标签匹配。
+- `histogram` 和 `summary`只能在本类型之间进行算数运算，因为`histogram`类型中包含特有标签`le`；`summary`类型中包含特有标签`quantile`，无法和其他类型进行标签匹配，即[向量匹配](#向量匹配vector-matching). 
 
 
 #### 比较运算符
@@ -155,9 +155,9 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 <br>
 
-##### **示例1:** 比较运算符基本使用   
+##### **示例1:** 比较运算符基本使用
 
-查询出请求量大于50的指标 ` prometheus_http_requests_total > 50`  如图  
+查询出请求量大于50的指标 `prometheus_http_requests_total > 50`  如图  
 
 ![prometheus_http_requests_total_greater_50](./src/prometheus_http_requests_total_greater_50.png) 
 
@@ -170,11 +170,43 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 ![prometheus_http_requests_total_greater_50_bool](./src/prometheus_http_requests_total_greater_50_bool.png)
 
 
-
 #### 逻辑运算符
 
 `prometheus`支持逻辑运算符 `and`(交集)、`or`(并集)、`unless`(差集)，只用于`instant vector`之间的运算。
 
+
+##### **示例1:** 逻辑运算符-交集基本使用
+
+TODO
+
+
+
+##### **示例2:** 逻辑运算符-并集基本使用
+
+TODO
+
+
+##### **示例3:** 逻辑运算符-差集基本使用
+
+TODO
+
+
+##### **示例4:** 组合使用
+
+TODO
+
+### 向量匹配Vector Matching
+
+#### 关键字
+
+
+#### 一对一匹配
+
+TODO
+
+#### 多对一和一对多
+
+TODO
 
 ### 聚合操作符
 
