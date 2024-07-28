@@ -42,12 +42,14 @@ scrape_configs:
 ```
 
 展示效果：  
-
+<br>
 首先，我们先看一下`target`上有哪些`label`,访问[http://127.0.0.1:9090/targets?search=](http://127.0.0.1:9090/targets?search=)  如图：  
 
 ![prometheus_label_demo_1_target](./src/prometheus_label_demo_1_target.png)
 
-**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示  
+<br>
+
+我们再看一下指标，**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示  
 
 ![prometheus_label_demo_1](./src/prometheus_label_demo_1.png)
 
@@ -81,16 +83,13 @@ scrape_configs:
 ```
 
 展示效果：
-
+<br>
 首先，我们先看一下`target`上有哪些`label`,访问[http://127.0.0.1:9090/targets?search=](http://127.0.0.1:9090/targets?search=), 如图:  
 
 ![prometheus_label_demo_2_target](./src/prometheus_label_demo_2_target.png)
-
-我们在看一下指标，**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示 , 如图:  
+<br>
+我们再看一下指标，**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示 , 如图:  
 ![prometheus_label_demo_2](./src/prometheus_label_demo_2.png)
-
-
-
 
 
 可见：两个target获取的指标被打上不同的标签。**`labels`只作用于当前的`target`**
@@ -101,20 +100,41 @@ scrape_configs:
 
 ### 基本使用
 
-TODO  
+`Relabeling` 需要配置在prometheus的配置文件中(*例如：`prometheus.yaml`*)。与服务发现配置为同一层级的`relabel_configs`模块下进行配置。
+配置的关键字：
 
-### action
+- `source_labels` 源标签，没有经过`relabel`处理之前的标签名字。
+- `target_label` 目标标签，通过`relabel`处理之后的标签名字。
+- `separator` 源标签的值的连接分隔符。默认是"`;`"。
+- `regex` 正则表达式，匹配源标签的值默认是`(.*)`。
+- `replacement`通过分组替换后标签（`target_label`）对应的值。默认是`$1`
+- 具体处理的行为,即`action`，即如果`source_labels`指标满足`regex`规则，那么`prometheus`会进行“特定的处理”，将处理结果赋值给`target_label`。具体有哪些行为呢？ 如下表所示：  
 
-
-
-
-
+<br>
 
 | action | 说明    |
 | :-----| :---- | 
-|replace |根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签 | 
-|keep    |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集 | 
-|drop	   |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与keep相反|
-|labeldrop	|使用regex表达式匹配标签，符合规则的标签将从target实例中移除|
-|labelkeep|使用regex表达式匹配标签，仅收集符合规则的target，不符合匹配规则的不收集|
-|labelmap	 | 根据regex的定义去匹配Target实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|
+|replace |根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签。如果未指定`action`，则默认就是`replace`| 
+|keep    |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集| 
+|drop	   |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与`keep`相反|
+|labelkeep|使用`regex`表达式匹配标签，仅收集符合规则的`target`，不符合匹配规则的不收集|
+|labeldrop	|使用`regex`表达式匹配标签，符合规则的标签将从`target`实例中移除|
+|labelmap	 | 根据`regex`的定义去匹配`Target`实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|
+
+
+#### Relabeling - replace 标签替换
+
+TODO
+
+
+#### Relabeling - keep与drop
+
+TODO
+
+#### Relabeling - labelkeep和labeldrop
+
+TODO
+
+#### Relabeling - labelmap
+
+TODO
