@@ -41,28 +41,80 @@ scrape_configs:
            biz: infra  
 ```
 
-展示效果
+展示效果：  
 
-![](./src/prometheus_label_demo.png)
+首先，我们先看一下`target`上有哪些`label`,访问[http://127.0.0.1:9090/targets?search=](http://127.0.0.1:9090/targets?search=)  如图：  
+
+![prometheus_label_demo_1_target](./src/prometheus_label_demo_1_target.png)
+
+**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示  
+
+![prometheus_label_demo_1](./src/prometheus_label_demo_1.png)
 
 可见所有指标都被打上这些`env: prod`、`service: monitor`、`biz: infra`标签  
 
-### Relabeling
+
+#### 案例2: 作用范围是target，而不是job
+
+在[案例1:基本使用](#案例1基本使用)的基础上，再追加一个`target`目标为`http://127.0.0.1:9090/metrics`,`biz`标签设置为`internal`。两个相同的`target`,标签不同会是什么结果呢？
+
+配置  
+
+```yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+```
+
+展示效果：
+
+首先，我们先看一下`target`上有哪些`label`,访问[http://127.0.0.1:9090/targets?search=](http://127.0.0.1:9090/targets?search=), 如图:  
+
+![prometheus_label_demo_2_target](./src/prometheus_label_demo_2_target.png)
+
+我们在看一下指标，**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示 , 如图:  
+![prometheus_label_demo_2](./src/prometheus_label_demo_2.png)
 
 
-`Relabeling`是`prometheus`的一种强大的功能，可以在拉取`targets`指标之前，动态地重写、增加、删除标签。 每个scrape_config中可以配置多个标签。它们会按照在配置文件中出现的先后顺序而作用与每个目标的标签集
+
+
+
+可见：两个target获取的指标被打上不同的标签。**`labels`只作用于当前的`target`**
+
+## Relabeling
+
+`Relabeling`是`prometheus`的一种强大的功能，可以在拉取`targets`指标之前，动态地重写、增加、删除标签。 每个`scrape_config`中可以配置多个标签。它们会按照在配置文件中出现的先后顺序而作用与每个目标的标签集。
+
+### 基本使用
+
+TODO  
+
+### action
 
 
 
 
 
-# relabel使用
 
-| relabel_configs action | 修改对象| 说明    |
-| :-----| :---- | :---- | 
-|replace   | label|根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签 | 
-|keep     | target |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集 | 
-|drop	    | target |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与keep相反|
-|labeldrop	||使用regex表达式匹配标签，符合规则的标签将从target实例中移除|
-|labelkeep|	|使用regex表达式匹配标签，仅收集符合规则的target，不符合匹配规则的不收集|
-|labelmap	 | | 根据regex的定义去匹配Target实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|
+| action | 说明    |
+| :-----| :---- | 
+|replace |根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签 | 
+|keep    |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集 | 
+|drop	   |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与keep相反|
+|labeldrop	|使用regex表达式匹配标签，符合规则的标签将从target实例中移除|
+|labelkeep|使用regex表达式匹配标签，仅收集符合规则的target，不符合匹配规则的不收集|
+|labelmap	 | 根据regex的定义去匹配Target实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|

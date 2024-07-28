@@ -1,0 +1,11 @@
+@hostname = 127.0.0.1
+@port = 8520
+@host = {{hostname}}:{{port}}
+@contentType = application/json
+@createdAt = {{datetime iso8601}}
+@noCache = no-cache
+
+GET  /ping/test
+Host: {{host}}
+Content-Type: {{contentType}}
+Cache-Control: {{noCache}}
