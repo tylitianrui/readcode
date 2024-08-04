@@ -32,12 +32,15 @@
 ## 1.2 功能介绍
 
 ### 1.2.1 服务发现
+
 服务发现就是要解决`Prometheus server` 需要监控哪些服务的问题(采集哪些节点的信息)。获取监控对象的方式有两种:
-  - 静态文件配置  
-  - 动态服务发现  
+
+- 静态文件配置  
+- 动态服务发现  
 
 
 #### 静态文件配置
+
 在`Prometheus`的配置文件中，指定采集的目标。  
 例如：  
 ```
@@ -57,90 +60,115 @@ kill -HUP  <prometheus pid>
 
 #### 动态服务发现  
 
-在云原生环境下，动态服务发现就是必要的要求了。 
-云原生特点： 
+在云原生环境下，动态服务发现就是必要的要求了。
+云原生特点:
+
 - 动态伸缩。
 - 可以管理大量的容器。
 
-**服务发现的流程**   
+**服务发现的流程**
+
 以`kubernetes`为例，简述服务发现的流程。
+
 1. 在`prometheus`的配置文件`prometheus.yml`配置 **`kubernetes api server`地址** (*选填，不填则认为`prometheus`监控其所在的`kubernetes`集群*)和 **认证凭证**。 这样`prometheus`就可以获取到`kubernetes`集群的信息了。
 2. `prometheus`的服务发现组件`watch` `kubernetes`集群的变化。无论新`node`加入`kubernetes`集群还是 新容器被创建/删除了，`prometheus`都可以感知到。
 
 相关文档：
-- 服务发现相关配置： https://prometheus.io/docs/prometheus/2.53/configuration/configuration/#configuration-file
-- kubernetes相关配置： https://prometheus.io/docs/prometheus/2.53/configuration/configuration/#kubernetes_sd_config  
 
-**对kubernetes服务发现代码简述**
-- 服务发现配置字段：`xxxx_sd_config` 例如:`kubernetes_sd_config`.
-
-```
-// 配置注册.文件：discovery/registry.go
-// RegisterConfig registers the given Config type for YAML marshaling and unmarshaling.
-func RegisterConfig(config Config) {
-	registerConfig(config.Name()+"_sd_configs", reflect.TypeOf(config), config)
-}
-
-// 文件：discovery/discovery.go
-// 配置项解析
-// A Config provides the configuration and constructor for a Discoverer.
-type Config interface {
-	// Name returns the name of the discovery mechanism.
-	Name() string
-
-	// NewDiscoverer returns a Discoverer for the Config
-	// with the given DiscovererOptions.
-	NewDiscoverer(DiscovererOptions) (Discoverer, error)
-
-	// NewDiscovererMetrics returns the metrics used by the service discovery.
-	NewDiscovererMetrics(prometheus.Registerer, RefreshMetricsInstantiator) DiscovererMetrics
-}
+- 服务发现相关配置：[https://prometheus.io/docs/prometheus/2.53/configuration/configuration/#configuration-file](https://prometheus.io/docs/prometheus/2.53/configuration/configuration/#configuration-file)
+- kubernetes相关配置：[https://prometheus.io/docs/prometheus/2.53/configuration/configuration/#kubernetes_sd_config](https://prometheus.io/docs/prometheus/2.53/configuration/configuration/#kubernetes_sd_config)
 
 
-// 文件： discovery/kubernetes/kubernetes.go
-// kubernetes SDConfig Name returns the name of the Config.
-func (*SDConfig) Name() string { return "kubernetes" }
-
-// NewDiscoverer returns a Discoverer for the Config.
-func (c *SDConfig) NewDiscoverer(opts discovery.DiscovererOptions) (discovery.Discoverer, error) {
-	return New(opts.Logger, c)
-}
-
-```
-- 服务发现代码
-
-```
-// Discoverer provides information about target groups. It maintains a set
-// of sources from which TargetGroups can originate. Whenever a discovery provider
-// detects a potential change, it sends the TargetGroup through its channel.
-//
-// Discoverer does not know if an actual change happened.
-// It does guarantee that it sends the new TargetGroup whenever a change happens.
-//
-// Discoverers should initially send a full set of all discoverable TargetGroups.
-
-// 文件：discovery/discovery.go
-type Discoverer interface {
-	// Run hands a channel to the discovery provider (Consul, DNS, etc.) through which
-	// it can send updated target groups. It must return when the context is canceled.
-	// It should not close the update channel on returning.
-	Run(ctx context.Context, up chan<- []*targetgroup.Group)
-}
+### 标签处理-标签、relabel
 
 
-//文件： discovery/kubernetes/kubernetes.go
-func (d *Discovery) Run(ctx context.Context, ch chan<- []*targetgroup.Group) {
-  // .......
-}
+通过静态配置/服务发现获取`targets`之后，我们就面临下一个问题：`targets`提供的指标、标签都是已经确定的了。指标的标签并不一定符合`prometheus`运维人员的需求，让`targets`开发人员去改又切实际。`prometheus`提供的`label`(打标签)、`relabeling`(标签改写)可以解决这些问题。
 
 
+#### 标签处理label
+
+##### 示例:为target打标签
+
+目前有两个`target`，分布是`localhost:9090`、`127.0.0.1:9090`。给`localhost:9090`指标打标签 `service: srv-1`;给`127.0.0.1:9090`监控指标打标签 `service: srv-2`。 配置如下：  
+
+```yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           service: srv-1
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           service: srv-2
 ```
 
-### 1.2.2 数据采集
+**效果**： 
+
+`target` 标签如图:  
+
+![prometheus/src/label_two_targtes_demo_1](src/label_two_targtes_demo_1.png)
+
+<br>
+
+任意选取一个metric,例如`go_memstats_heap_alloc_bytes`,对比标签
+
+![prometheus/src/label_two_targtes_demo_2](src/label_two_targtes_demo_2.png)
+
+#### relabeling
+
+##### **示例**:为job_name进行标签改写
+
+基于[示例:为target打标签](#示例为target打标签),标签`instance`默认值是标签`__address__`的值，即两个`target`的`instance`标签分别是`localhost:9090`、`127.0.0.1:9090`；本次将标签`instance`值更改为`monitor` 
+  
+```yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           service: srv-1
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           service: srv-2
+    relabel_configs:
+      - source_labels: [instance]
+        replacement: 'monitor'
+        target_label: instance
+        action: replace  
+```  
+
+**效果**： 
+
+`target` 标签如图:  
+
+![prometheus/src/relabel_two_targtes_demo_1](src/relabel_two_targtes_demo_1.png)
+
+<br>
+
+任意选取一个metric,例如`go_memstats_heap_alloc_bytes`,对比标签
+
+![prometheus/src/relabel_two_targtes_demo_2](src/relabel_two_targtes_demo_2.png)
+
+
+官方说明： [relabel_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)
+
+
+### 1.2.3 数据采集
 
 #### 数据采集的配置
 
-通过静态配置/服务发现获取`targets`之后，`Prometheus`就会**定期**地通过http接口获取监控的数据。以静态配置为例
+通过静态配置/服务发现获取`targets`之后，`Prometheus`就会**定期**地通过`http`接口获取监控的数据。以静态配置为例
 ```
 global:
   scrape_interval: 15s  
@@ -151,11 +179,12 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9090"]
 ```
-每隔15s获取请求一次 `127.0.0.1:9090/metrics` 获取监控数据。
+每隔`15s`获取请求一次 `127.0.0.1:9090/metrics` 获取监控数据。
+
 
 请求：   
 ```
-curl --location '127.0.0.1:9090/metrics' \
+curl -X  GET '127.0.0.1:9090/metrics' \
 --header 'User-Agent: Prometheus/2.53.0' \
 --header 'Accept: application/openmetrics-text;version=1.0.0;q=0.5,application/openmetrics-text;version=0.0.1;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=2' \
 --header 'X-Prometheus-Scrape-Timeout-Seconds: 15'
@@ -291,51 +320,6 @@ go_gc_duration_seconds{quantile="1"} 0.001552459
   展示：  
   ![go_gc_duration_seconds](src/go_gc_duration_seconds.png " go_gc_duration_seconds")
 
-
-
-### 1.2.3 数据处理
-
-通过定期拉取`target`的数据，那么就面临一些问题：怎么处理这些数据呢？
-
-#### 标签处理
-
-目前，我们已经获取到了相关数据。那么怎么通过标签处理这些数据呢？
-- 通过 `labels`可以实现添加自定义标签  
-- 通过`relabel_configs`配置实现标签修改、过滤、删除等。
-
-
-**demo**： 改写`instance` 标签为 `tyltr`.  
-  
-```
-global:
-  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
-  # scrape_timeout is set to the global default (10s).
-
-scrape_configs:
-  - job_name: "prometheus"
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ["localhost:9090"]
-    relabel_configs:
-      - source_labels: [instance]
-        replacement: 'tyltr'
-        target_label: instance
-        action: replace
-```  
-  
-效果对比：  
-
-
-| 更改instance标签前   | 更改instance标签后    |
-| :-----| :---- |
-| ![pre_relabel_instance.png](src/pre_relabel_instance.png "pre_relabel_instance.png") | ![post_relabel_instance.png](src/post_relabel_instance.png "post_relabel_instance.png")  |
-
-注： 标签`instance`默认值是标签`__address__`的值，即`localhost:9090`；本次将标签`instance`值更改为`tyltr` 
-
-  
-
-官方说明： [relabel_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)
 
 
 ### 1.2.4 数据存储  
