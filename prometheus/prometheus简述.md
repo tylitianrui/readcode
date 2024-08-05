@@ -312,6 +312,8 @@ remote_write:
 `Prometheus` 提供了一种功能表达式语言`PromQL`，允许用户实时选择和汇聚时间序列数据。表达式的结果可以在浏览器中显示为图形，也可以显示为表格数据，或者由外部系统通过`HTTP API` 调用。  
 `PromQL`的语法与使用、实践、源码解析，见[PromQL篇](./promql.md)
 
+`Prometheus`可以通过`PromQL` 可以在本地数据库`TSDB`或者第三方存储里的查询监控数据。那么会不会存在查询缓慢的情况，例如`Mysql`可以通过索引来解决慢查询的问题。`Prometheus`有没有什么解决此类问题的策略呢？答案是肯定的。  
+`Prometheus`通过`recording rules`来解决这个问题。`recording rules`是通过**预先计算经常需要的表达式**或**计算成本高昂的表达式**，并将其结果保存为一组新的时间序列，查询时直接使用这组新的时间序列。`recording rules`功能是由`Prometheus`的`RuleManager`实现的。`RuleManager`除了实现`recording rules`功能之外，也实现了触发告警的`Alert Rules`功能。
 
 ### 1.2.6 告警
 
@@ -319,7 +321,7 @@ remote_write:
 
 ![prometheus_altermanager](./src/alter.drawio.png)
 
-用户需要在`Prometheus Server`上编写告警触发规则。一旦`Prometheus`收集到的指标触发到告警阈值时，`Prometheus`就会生成一个警报，并且通过`http`协议将告警通知发送给`Alertmanager`。  
+用户需要在`Prometheus Server`上编写告警触发规则。一旦`Prometheus`的`Alert Rules`功能检测到指标触发了告警阈值，`Prometheus`就会生成一个警报，并且通过`http`协议将告警通知发送给`Alertmanager`。  
 
 `Alertmanager`接收到 `Prometheus Server`发来的告警通知之后，会对告警进行处理(例如：去重、分组等)，并且根据其**标签**将警报路由到不同的接收者,例如:`email`,`webhook`等。除此之外，`Alertmanager`支持对特定警报进行静默，直到静默条件恢复才会解除屏蔽。
 
