@@ -1,6 +1,7 @@
 # prometheus
 
 ## 目录
+
 - [项目简述与准备](项目简述与准备.md)
   - [代码版本](项目简述与准备.md#代码版本)
   - [阅读环境](项目简述与准备.md#阅读环境)
@@ -14,8 +15,6 @@
     - [服务发现sd](prometheus简述.md#121-服务发现)
     - [数据采集scrape](prometheus简述.md#122-数据采集)
     - [数据处理](prometheus简述.md#123-数据处理)
-      - 数据类型(todo)
-      - 四种Metric类型
     - [数据处理](prometheus简述.md#123-数据处理)
     - [数据存储storage](prometheus简述.md#124-数据存储)
     - [查询query](prometheus简述.md#125-查询)
