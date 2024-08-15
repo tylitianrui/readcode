@@ -47,8 +47,9 @@ func (h *Wrapper) printReq(r *http.Request) {
 	fmt.Println("\n\r\n\r\n\r")
 	fmt.Println("method:", r.Method)
 	fmt.Println("url:", r.Host+r.URL.String())
+	// 打印header
 	if len(r.Header) > 0 {
-		fmt.Println("-----Query start------")
+		fmt.Println("-----header start------")
 	}
 	for k, v := range r.Header {
 		if len(v) == 1 {
@@ -59,9 +60,10 @@ func (h *Wrapper) printReq(r *http.Request) {
 
 	}
 	if len(r.Header) > 0 {
-		fmt.Println("-----Query end------")
+		fmt.Println("-----header end------")
 	}
 
+	// 打印query
 	q := r.URL.Query()
 	if len(q) > 0 {
 		fmt.Println("-----Query start------")
