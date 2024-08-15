@@ -37,15 +37,15 @@ prometheus
 
 ```
 
-## prometheus server启动
 
-###  goroutine管理(第三方依赖)
+## goroutine管理(第三方依赖)
 
 代码仓库: [github.com/oklog/run](https://github.com/oklog/run)  
 
 在`prometheus`中，使用了很多第三方库，为什么要单独说明这个依赖呢？ 因为`prometheus`所有组件`goroutine`都是通过此依赖进行管理的。  
 
 下面是`main`函数中一段代码: 
+
 ```go
 	var g run.Group
   // ....
@@ -73,16 +73,17 @@ prometheus
 <br/>
 
 `github.com/oklog/run` 有两个主要方法:
+
 - `func (g *Group) Add(execute func() error, interrupt func(error))`  注册执行函数`execute`、退出函数`interrupt`，为每个执行函数`execute` 都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，就会执行所有的退出函数`interrupt`进行退出、回收等“善后”工作。
-- `func (g *Group) Run() error ` 运行
+- `func (g *Group) Run() error` 运行
 
 
 
-### main函数执行
+## main函数执行
 
-####  执行流程图  
+### 执行流程图  
 
-<br/> 
+<br/>
 
 `prometheus` 启动流程  
 
@@ -90,7 +91,6 @@ prometheus
 
 
 `prometheus` 流程  
-
 
 
 说明：  
