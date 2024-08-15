@@ -1,6 +1,6 @@
-# prometheus server
+# prometheus server启动逻辑
 
-## 1. 项目结构
+## 项目代码目录
 
 项目代码结构: 
 ```
@@ -37,9 +37,9 @@ prometheus
 
 ```
 
-## 3.prometheus server启动-main函数分析
+## prometheus server启动
 
-### 3.1 goroutine管理(第三方依赖)
+###  goroutine管理(第三方依赖)
 
 代码仓库: [github.com/oklog/run](https://github.com/oklog/run)  
 
@@ -78,9 +78,9 @@ prometheus
 
 
 
-### 3.2 main函数执行
+### main函数执行
 
-#### 3.2.1 执行流程图  
+####  执行流程图  
 
 <br/> 
 
