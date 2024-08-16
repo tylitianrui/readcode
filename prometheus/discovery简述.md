@@ -12,7 +12,23 @@
 
 ## static_config
 
-配置详见[prometheus功能介绍-静态配置](prometheus功能介绍.md#静态文件配置)
+配置文件：**prometheus.yml**
+
+```yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+  scrape_configs:
+    - job_name: "prometheus"
+      metrics_path: "/metrics"
+      static_configs:
+        - targets: ["127.0.0.1:9090"]
+```
+
+如图：  
+![prometheus_static_config](./src/prometheus_static_config.png)
+
 
 ## file_sd_config
 
@@ -51,9 +67,3 @@ scrape_configs:
 
 如图：  
 ![prometheus_file_sd_configs](./src/prometheus_file_sd_configs.png)
-
-
-
-## kubernetes_sd_config
-
-配置见下一章[prometheus监控kubernetes配置](discovery_k8s_config.md)

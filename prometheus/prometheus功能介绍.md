@@ -30,7 +30,8 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9090"]
 ```
-采集对象的地址`127.0.0.1`,端口9090。采集对象暴露的api为`/metrics`。 `Prometheus server`定期请求`127.0.0.1:9090/metrics` 采集目标的数据。
+采集对象的地址`127.0.0.1`,端口9090。采集对象暴露的api为`/metrics`。 `Prometheus server`定期请求`127.0.0.1:9090/metrics` 采集目标的数据。 如图: 
+![prometheus_static_config](./src/prometheus_static_config.png)
 
 如果监控的服务发生迁移、变更，则需要修改`prometheus`的配置文件并通知`prometheus`从新加载配置文件。
 ```
