@@ -2,51 +2,34 @@
 
 ## 目录
 
-- [项目简述与准备](项目简述与准备.md)
+- 项目简述与准备
   - [代码版本](项目简述与准备.md#代码版本)
   - [阅读环境](项目简述与准备.md#阅读环境)
   - [下载代码](项目简述与准备.md#下载代码)
   - [手动编译安装与运行](项目简述与准备.md#下载代码)
   - [开发应用接入prometheus监控](项目简述与准备.md#开发应用接入prometheus监控)
   - [拉取演示](项目简述与准备.md#拉取演示)
-- [prometheus简述](prometheus简述.md)
+- prometheus简述
   - [prometheus架构](prometheus简述.md)
   - [prometheus功能介绍](prometheus功能介绍.md)
   - [prometheus server模块介绍](prometheus_server模块.md)
   - [prometheus server启动-main函数分析](prometheus_server启动-main函数分析.md)
-- [服务发现](discovery简述.md)
+- 服务发现
   - [服务发现简述](discovery简述.md)
   - [prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
   - [prometheus服务发现的核心逻辑](discovery_core_logic.md)
-  - [prometheus服务发现的实现](discovery_core_implementation.md)
-  - [kubernetes协议的服务发现](discovery_k8s_implementation.md)
-- [scrape](scrape_core_logic.md)
+  - [prometheus服务发现的实现 todo](discovery_core_implementation.md)
+  - [kubernetes协议的服务发现 todo](discovery_k8s_implementation.md)
+- scrape
   - [数据采集scrape模块简介](scrape_core_logic.md)
-    - [scrape模块核心逻辑](scrape_core_logic.md#scrape模块核心逻辑)
-      - [scrape模块-更新和管理target](scrape_core_logic.md#更新和管理target)
-      - [scrape模块-label与relabeling](scrape_core_logic.md#label与relabeling)
-      - [scrape模块-拉取metrics](scrape_core_logic.md#拉取metrics)
-      - [scrape模块-存储指标](scrape_core_logic.md#调用storage模块函数存储指标)
   - [数据采集scrape模块代码分析](scrape_work.md)
-    - [关键的数据结构](scrape_work.md#关键的数据结构)
-      - [关键的数据结构-`scrape.Manager`](scrape_work.md#scrapemanager)
-        - [`scrape.Manager`-`Manager.targetSets`](scrape_work.md#managertargetsets)
-      - [关键的数据结构-`scrape.scrapePool`](scrape_work.md#scrapescrapepool)
-      - [关键的数据结构-`scrape.scrapeLoop`](scrape_work.md#scrapescrapeloop)
-    - [HOW TO WORK](scrape_work.md#how-to-work)
-      - [创建`ScrapeManager`与监听服务发现](scrape_work.md#创建scrapemanager与监听服务发现)
-      - [更新`targets`](scrape_work.md#更新targets)
-      - [为job创建ScrapePool](scrape_work.md#为job创建scrapepool)
-      - [relabel与获取target信息](scrape_work.md#relabel与获取target信息)
-        - [relabel解析](scrape_work.md#relabel解析)
-        - [target转换成具体的拉取目标](scrape_work.md#target转换成具体的拉取目标)
-      - [scrape拉取指标](scrape_work.md#scrape拉取指标)
-      - [指标存储](scrape_work.md#指标存储)
-
-- [relabel](relabel.md)
-- [storage(todo)](storage.md)
-- [tsdb(todo)](tsdb.md)
-- [lables(todo)](lables.md)
+- Label和Relabeling
+  - [Label和Relabeling使用 todo](Label和Relabeling.md)
+  - [Label和Relabeling代码解析 todo](Label和Relabeling.md)
+- 存储模块
+  - todo
+- 时序数据库
+  - [时序数据](时序数据.md)
 - promql
   - [promql基本语法](promql_syntactic.md)
   - [聚合操作符与函数](aggregation_operators_functions.md)
