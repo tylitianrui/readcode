@@ -150,7 +150,7 @@ TODO -->
 
 `prometheus`中，新数据样本首先会存储于内存的`Head`中。其中`Head`中接收样本的`chunk`称之为`active chunk`。在新数据样本写入内存的`Head`时，会做一次预写日志，将新数据样本写入到`WAL`文件中。  
 
-`chunk`只能写入`120`个样本。TODO
+`chunk`只能写入`120`个样本。TODO  
 
 **当`active chunk`满了**或者**当前`active chunk`已经持续了2小时了**，内存的`Head`会创建新的`chunk`来接收新数据样本(*即：新的`active chunk`*)。之前的`active chunk`数据会落盘到`chunks_head`目录中，并通过`mmap`将此部分数据映射到内存。这样`prometheus`就可以根据需要，动态将此部分数据加载到内存了。
 
