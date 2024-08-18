@@ -102,24 +102,25 @@
 
 由上可以看到，文件目录分为三类：
 
-1. **block目录**  
+**1. block目录**  
 
-目录名为`01BKGV7JBM69T2G1BGBGM6KB12`、`01BKGTZQ1SYQJTR4PB43C8PD98`、`01BKGTZQ1HHWHV8FBJXW1Y3W0K`就是一个个的`block`。  
+目录名为`01BKGV7JBM69T2G1BGBGM6KB12`、`01BKGTZQ1SYQJTR4PB43C8PD98`、  `01BKGTZQ1HHWHV8FBJXW1Y3W0K`就是一个个的`block`。  
 
-默认情况下，`prometheus`以`2个小时`为一个时间窗口，即将`2小时`内产生的数据存储在一个`block`中。那么监控数据就会被以时间段的形式被拆分成不同的`block`，所以`prometheus`会产生很多`block`。每个`block`由`ulid`进行标识，例如`01BKGV7JBM69T2G1BGBGM6KB12`、`01BKGTZQ1SYQJTR4PB43C8PD98`...
+默认情况下，`prometheus`以`2个小时`为一个时间窗口，即将`2小时`内产生的数据存  储在一个`block`中。那么监控数据就会被以时间段的形式被拆分成不同的`block`，所  以`prometheus`会产生很多`block`。每个`block`由`ulid`进行标识，例如  `01BKGV7JBM69T2G1BGBGM6KB12`、`01BKGTZQ1SYQJTR4PB43C8PD98`...
 
 每个`block` 目录下包含以下部分：
 
-- meta.json    元信息  (必须),记录此block的基本信息，例如标识、起始时间时间戳、终止时间时间戳等
-- tombstones   对数据进行软删除，`prometheus`采用了**标记删除**的策略，将删除记录保存在`tombstones`中，查询时会根据`tombstones`文件中的删除记录来过滤已删除的部分.
-- index        索引。
-- chunks       用于保存时序数据。每个`chunks`目录下都有一个或者几个`chunk`,并且每个`chunk` 最大为`512mb`。超过的部分就会被截断新的`chunk`进行保存，每个`chunk`以数字编号命名,例如`000001`、`000002`...
+  - meta.json    元信息  (必须),记录此block的基本信息，例如标识、起始时间时间 戳、终止时间时间戳等
+  - tombstones   对数据进行软删除，`prometheus`采用了**标记删除**的策略，将 删除记录保存在`tombstones`中，查询时会根据`tombstones`文件中的删除记录来过 滤已删除的部分.
+  - index        索引。
+  - chunks       用于保存时序数据。每个`chunks`目录下都有一个或者几个 `chunk`,并且每个`chunk` 最大为`512mb`。超过的部分就会被截断新的`chunk`进行 保存，每个`chunk`以数字编号命名,例如`000001`、`000002`...
 
-2. **chunks_head**
+**2. chunks_head**  
 `prometheus`把新采集到的数据存储在内存的`head chunk`。但`chunk`只能写入`120`个样本。如果写满`120`个样本后，才开始进行 `mmap`映射写入写磁盘。然后生成一个空的`chunk` 继续存储新的样本。
+
 通过`mmap`映射写入写磁盘的数据就存储`chunks_head`目录下，`chunks_head`下的数据也以数字编号命名。
 
-3. **wal**
+**3. wal**
 
 `prometheus` 为了防止应用崩溃而导致内存数据丢失，引入了`WAL`机制。`WAL`采用日志追加模式，数据会先被追加到`WAL`文件中，然后再被刷新到存储引擎中。`WAL`文件被分割成默认大小为 `128MB`的数据段，每个数据段以数字命名，例如 `00000000`、 `00000001`...
 
