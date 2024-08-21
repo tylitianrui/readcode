@@ -127,10 +127,18 @@ func (h *Head) compactable() bool {
 - 如果一个`WAL`记录大小超过了数据段(`segment`)的大小(`128MB`),`prometheus`就会创建更大空间的数据段(`segment`)进行存储。
 
 
-### checkpoint原理
+### WAL清理与CheckPoint
+
+之前，我们简单阐述了`WAL`清理和`checkpoint`引入的必要性。本节我们将更详细的说明。
+
+#### WAL清理
 
 TODO
 
+
+#### CheckPoint
+
+TODO
 
 
 ## chunks_head原理
