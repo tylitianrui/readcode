@@ -307,6 +307,16 @@ TODO
 
 ```
 
+### WAL重放
+
+`tsdb`重启之后，需要重放wal来恢复数据。 WAL重放首先加载`checkpoint.X`目录下的文件；然后根据目录名`checkpoint.X`中的`X`找寻下一个数据段(`segment`)即`X+1`进行重放。例如上例中首先重放`checkpoint.00000004`的文件，结束之后，找到数据段`00000005`继续完成重放，直至加载完`wal`目录下的所有文件。
+
+WAL重放时，各个数据类型怎么处理：
+
+- `Series Records`: 在内存`head`创建`Series Record`记录;
+- `Sample Records`: 在head里添加`Sample Record`记录，然后寻找引用的`Series Record`记录，找到则添加，找不到则跳过。
+- `Tombstones Records`:  todo
+
 ## chunks_head原理
 
 TODO
