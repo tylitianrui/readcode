@@ -111,14 +111,63 @@ func (h *Head) compactable() bool {
 
 ## WAL
 
-一般情况下，数据库会通过`WAL`方式备份内存的数据，防止数据库崩溃造成的内存数据丢失。除了防止意外崩溃之外，正常重启也会使用`WAL`恢复内存数据。
-`WAL`都会采用**追加写**的方式记录数据，这种顺序写的方式比随机写高效的多。  
-任何数据库的数据更新都优先会记录内存，也就是会有`WAL`过程，也就意味着数据库的数据都会经历被`wal`文件存储的“经历”。如果不清理历史数据、无用数据`WAL`会被“撑爆”的,这就是`checkpoint`引入的主要原因。  
+`prometheus`将周期性采集指标，并把指标添加到`active head`，同时`TSDB`通过`WAL`将数据保存到磁盘上进行备份。当出现宕机重启时，就会程读取`WAL`记录，恢复数据。`prometheus`的`WAL`采用**追加写**的方式记录数据，这种顺序写的方式比随机写高效的多。
+`prometheus`数据更新都优先会记录内存，也就是会有`WAL`过程，也就意味着数据库的数据都会经历被`wal`文件存储的“经历”。一旦这些更新的数据落盘完成，对应在`WAL`中的备份数据就没用了。如果不清理历史数据、无用数据`WAL`会被“撑爆”的。`WAL`记录是没有经过压缩的，占用空间较大，并且恢复成本页是比较高的。这就是**WAL清理**重要原因。`WAL`清理时，会创建一个`checkpoint`记录清理后的数据状态。
 
-`prometheus`也不例外，遵循上述原则。`prometheus`将周期性采集指标，并把指标添加到`active head`，同时`TSDB`通过`WAL`将数据保存到磁盘上进行备份。当出现宕机重启时，就会程读取`WAL`记录，恢复数据。`WAL`记录是没有经过压缩的，占用空间较大，并且恢复成本页是比较高的。那本小节介绍`prometheus`的 `wal`机制。
+### 编码/数据的组织方法
+
+`prometheus`的`WAL`文件有三种编码类型：`Series records`、`Sample records`、`Tombstone records`。在源码中三种编码的类型[枚举值](https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/record/record.go#L40)
+
+| 类型   | 编码方式    |
+| :-----| :---- | 
+| Series records    | 1 (1b)| 
+| Sample records    | 2 (1b)| 
+| Tombstone records | 3 (1b)|
+
+
+#### Series Records
+
+由之前的讲解，我们知道`prometheus`的写入模型分三部分：(`labels`、`timestamp`、`value`)。
+`labels`是指标唯一标识。但是`labels`一般都很长，每次采集都把`labels`原封不动地存储，那么会造成磁盘空间的极大浪费，并且读写时也会造成很大的`IO`开销。为了解决这问题，`WAL`对`labels`进行了预处理。`labels`会被封装成`Series Record`，写入`wal`文件中。并且在内存中维护**labels与seriesId**的映射。`seriesId`是`Series Record`类型数据的ID,类型是自增的整形数据。写入数据由(`labels`、`timestamp`、`value`)转换成了(`seriesId`、`timestamp`、`value`)。
+
+获取`seriesId`的流程示意图：
+![获取`seriesId`的流程示意图](./src/seriesId.drawio.png)
+
+`Series Records`数据编码：
+
+```
+┌───────────────────────────────────────────────────────┐
+│ type = 1 <1b> 代码中SeriesRecord类型枚举值为1            │
+├───────────────────────────────────────────────────────┤
+│ ┌───────────────┬───────────────────────────────────┐ │
+│ │ seriesId <8b> │ n= len(labels) labels的对数        │ │
+│ ├───────────────┴────────────┬──────────────────────┤ │
+│ │ len(label_name1) <uvarint> │ label_name1 <bytes>  │ │
+│ ├────────────────────────────├──────────────────────┤ │
+│ │ len(label_val1)  <uvarint> | label_val1 <bytes>   │ │
+│ ├────────────────────────────┴──────────────────────┤ │
+│ │                . . .                              │ │
+│ ├────────────────────────────┬──────────────────────┤ │
+│ │ len(label_name_n) <uvarint>│ label_name_n <bytes> │ │
+│ ├────────────────────────────├──────────────────────┤ │
+│ │ len(label_val_n)  <uvarint>| label_val_n <bytes>  │ │
+│ └───────────────────────────────────────────────────┘ │
+│                  . . .                                │
+└───────────────────────────────────────────────────────┘
+
+```
+
+
+
+
+
+
+#### Sample Records
+
+
+
 
 ### WAL原理
-
 
 `WAL`文件被分割成默认大小为 `128MB`的数据段(`segment`)，每个数据段以数字命名，例如 `00000000`、 `00000001`... WAL的写入单位是页(`page`)，每页的大小为`32KB`,数据一次一页地写入磁盘。
 每个`WAL`记录都是一个`byte`切片(*注：切片是go语言的特性，本质就是数组，非go语言开发者，可以理解为`byte`数组*)。如何存储`WAL`记录呢？
@@ -129,7 +178,6 @@ func (h *Head) compactable() bool {
 
 ### WAL清理与CheckPoint
 
-之前，我们简单阐述了`WAL`清理和`checkpoint`引入的必要性。本节我们将更详细的说明。
 
 #### WAL清理
 
