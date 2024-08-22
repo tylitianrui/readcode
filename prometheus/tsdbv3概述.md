@@ -269,21 +269,22 @@ TODO
 理论上，数据被持久化成`block`就可以删除旧的`WAL`记录，但是实际中不能这么粗暴。`prometheus`如何选取数据段(`segment`)进行清理的呢？
 选取的公式 [last = first + (last-first)*2/3](https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/head.go#L1267)，那么`[first,last]`将会被清理。
 
-看例子说民： 假设目前有`000000` ~ `000006` 共6个数据段(`segment`)
+看例子说民： 假设目前有`00000000` ~ `00000006` 共6个数据段(`segment`)
 
 ```
 └── wal
-    ├── 000000
-    ├── 000001
-    ├── 000002
-    ├── 000003
-    ├── 000004
-    ├── 000005
-    └── 000006
+    ├── 00000000
+    ├── 00000001
+    ├── 00000002
+    ├── 00000003
+    ├── 00000004
+    ├── 00000005
+    └── 00000006
 
 ```
 
-那么`first = 000000`, `last = first + (last-first)*2/3 = 000000 + (000006 - 000000) * 2 / 3 = 4`,则`[000000,000004]`就是被选择的数据段(`segment`)。
+
+那么`first = 00000000`, `last = first + (last-first)*2/3 = 00000000 + (00000006 - 00000000) * 2 / 3 = 00000004`,则`[00000000,00000004]`就是被选择的数据段(`segment`)。
 
 选出了数据段(`segment`)，那么可不可以直接删除这些数据段？ 在回答之前，我们先回想一个场景：在上文中提到的`Series Records`被`Sample Records`引用。`Series Records` 也会写到`wal`记录里面，并且只写一次而且不知道写在哪个数据段(`segment`)里面。如果直接删除了，那么下次启动的时候，无法恢复`Series Records`记录了。
 如果无差别清理数据段(`segment`)，那么`Series Records`信息就会丢失。这一场景就需要`CheckPoint`来解决。
@@ -292,11 +293,19 @@ TODO
 
 上述已经选出了被清理的`WAL`文件。`prometheus`不会直接删除这些记录，而是创建`CheckPoint`。`CheckPoint`从小到大进行遍历数据段(`segment`)，依次筛选数据，无用的删除，有用的保留。`prometheus Head`的数据会陆续持久化到硬盘，那么假设持久化的最后一条记录的时间戳为T,那么`Head`中就不存在T之前的数据了，wal也无需保留这些样本数据。综上清理对象：
 
-- 删除`Head`中不再存在的`Series Records`数据
-- 删除所有在时间T之前的`Sample Records`数据；
-- 删除所有在时间T之前的`Tombstone records`数据；
-- 保留剩余的`Series Records`、`Sample Records` 和`Tombstone records`数据，按照之前的顺序，写入一个名为`checkpoint.X`的文件中。`checkpoint.X`中的`X`表示此次清理操作最后一个数据段(`segment`)的序号。例如上例 `000000`,`000001`,`000002`,`000003`,`000004`最后一个是`000004`，那么命名为`checkpoint.000004`。
+- 删除`Head`中不再存在的`Series Records`数据;
+- 删除所有在时间T之前的`Sample Records`数据;
+- 删除所有在时间T之前的`Tombstone records`数据;
+- 保留剩余的`Series Records`、`Sample Records` 和`Tombstone records`数据，按照之前的顺序封装成`WAL`文件，写入一个名为`checkpoint.X`的目录中。`checkpoint.X`中的`X`表示此次清理操作最后一个数据段(`segment`)的序号。例如上例 `00000000`,`00000001`,`00000002`,`00000003`,`00000004`最后一个是`00000004`，那么目录命名为`checkpoint.00000004`。
 
+```
+└── wal
+    ├── 00000005
+    ├── 00000006
+    └── checkpoint.00000004
+        └── 00000000
+
+```
 
 ## chunks_head原理
 
