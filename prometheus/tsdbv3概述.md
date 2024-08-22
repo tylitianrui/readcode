@@ -116,6 +116,12 @@ func (h *Head) compactable() bool {
 
 注：默认情况下，`WAL`记录进行`Snappy`压缩。`Snappy`压缩算法主要特点就是快，它的目标不是最大限度压缩率，而是在提供高速压缩速度。`Snappy`压缩可以被看成不完全的压缩。
 
+`WAL`文件被分割成默认大小为 `128MB`的数据段(`segment`)，每个数据段以数字命名，例如 `00000000`、 `00000001`... WAL的写入单位是页(`page`)，每页的大小为`32KB`,数据一次一页地写入磁盘。
+每个`WAL`记录都是一个`byte`切片(*注：切片是go语言的特性，本质就是数组，非go语言开发者，可以理解为`byte`数组*)。如何存储`WAL`记录呢？
+
+- 如果一个`WAL`记录大小超过了页(`page`)的大小，这页就会被拆解给更小的子记录，多页存储。
+- 如果一个`WAL`记录大小超过了数据段(`segment`)的大小(`128MB`),`prometheus`就会创建更大空间的数据段(`segment`)进行存储。
+
 ### 编码/数据的组织方法
 
 `prometheus`的`WAL`文件有三种编码类型：`Series records`、`Sample records`、`Tombstone records`。在源码中三种编码的类型[枚举值](https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/record/record.go#L40)
@@ -253,22 +259,31 @@ TODO
 
 
 
-### WAL原理
-
-`WAL`文件被分割成默认大小为 `128MB`的数据段(`segment`)，每个数据段以数字命名，例如 `00000000`、 `00000001`... WAL的写入单位是页(`page`)，每页的大小为`32KB`,数据一次一页地写入磁盘。
-每个`WAL`记录都是一个`byte`切片(*注：切片是go语言的特性，本质就是数组，非go语言开发者，可以理解为`byte`数组*)。如何存储`WAL`记录呢？
-
-- 如果一个`WAL`记录大小超过了页(`page`)的大小，这页就会被拆解给更小的子记录，多页存储。
-- 如果一个`WAL`记录大小超过了数据段(`segment`)的大小(`128MB`),`prometheus`就会创建更大空间的数据段(`segment`)进行存储。
-
-
 ### WAL清理与CheckPoint
 
+`WAL`清理指的是定期清理旧的`WAL`记录。这样既可以节约存储空间，又可以提升`TSDB`重启速度。在`TSDB`重启需要加载`WAL`文件，`WAL`文件越大，加载时候的开销就会增加。  
+本文称之为`WAL`清理，有的文档中称之为`WAL`截断、`WAL`删除等，英语文档称之`WAL truncation`。
 
 #### WAL清理
 
-TODO
+理论上，数据被持久化成`block`就可以删除旧的`WAL`记录，但是实际中不能这么粗暴。`prometheus`如何选取数据段(`segment`)进行清理的呢？
+选取的公式 [last = first + (last-first)*2/3](https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/head.go#L1267)，那么`[first,last]`将会被清理。
 
+看例子说民： 假设目前有`000000` ~ `000006` 共6个数据段(`segment`)
+
+```
+└── wal
+    ├── 000000
+    ├── 000001
+    ├── 000002
+    ├── 000003
+    ├── 000004
+    ├── 000005
+    └── 000006
+
+```
+
+那么`first = 000000`, `last = first + (last-first)*2/3 = 000000 + (000006 -000000) * 2 / 3 = 4`,则`[000000,000004]`将被清理。
 
 #### CheckPoint
 
