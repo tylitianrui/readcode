@@ -128,12 +128,14 @@ func (h *Head) compactable() bool {
 #### Series Records
 
 由之前的讲解，我们知道`prometheus`的写入模型分三部分：(`labels`、`timestamp`、`value`)。
-`labels`是指标唯一标识。但是`labels`一般都很长，每次采集都把`labels`原封不动地存储，那么会造成磁盘空间的极大浪费，并且读写时也会造成很大的`IO`开销。为了解决这问题，`WAL`对`labels`进行了预处理。`labels`会被封装成`Series Record`，写入`wal`文件中。并且在内存中维护**labels与seriesId**的映射。`seriesId`是`Series Record`类型数据的ID,类型是自增的整形数据。写入数据由(`labels`、`timestamp`、`value`)转换成了(`seriesId`、`timestamp`、`value`)。
+`labels`是指标唯一标识。但是`labels`一般都很长，每次采集都把`labels`原封不动地存储，那么会造成磁盘空间的极大浪费，并且读写时也会造成很大的`IO`开销。为了解决这问题，`WAL`对`labels`进行了预处理。`labels`会被封装成`Series Record`，写入`wal`文件中,**只写一次**。同时在内存中维护**labels与seriesId**的映射。`seriesId`是`Series Record`类型数据的ID,类型是自增的整形数据。写入数据由(`labels`、`timestamp`、`value`)转换成了(`seriesId`、`timestamp`、`value`)。
 
-获取`seriesId`的流程示意图：
+**获取`seriesId`的流程示意图**  
+
 ![获取`seriesId`的流程示意图](./src/seriesId.drawio.png)
 
-`Series Records`数据编码：
+**`Series Records`数据编码**
+
 
 ```
 ┌───────────────────────────────────────────────────────┐
@@ -157,6 +159,12 @@ func (h *Head) compactable() bool {
 
 ```
 
+说明：
+
+- `type` :代码中`SeriesRecord`类型枚举值为`1`
+- `seriesId` : `SeriesRecord`数据的标识
+- `n`:  `SeriesRecord`存储`label`的对数
+- 标签`key`的长度、标签`key`的内容以及对应的标签`value`的长度与标签`value`的内容
 
 
 
