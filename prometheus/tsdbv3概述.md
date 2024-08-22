@@ -1,7 +1,6 @@
 # TSDB v3 概述
 
-
-由于`TSDB V2`版本面临上述的诸多问题，`TSDB V3`应运而生。目前`prometheus v2.x`使用就是`TSDB V3`。 2017年,`Prometheus v2`发布之初,将`Prometheus v2`和 `Prometheus 1.8`存储方面进行了比较(详见:[storage:Prometheus v2 vs Prometheus 1.8](https://prometheus.io/blog/2017/11/08/announcing-prometheus-2-0/#storage) ),可见`TSDB V3`对`Prometheus`的性能显著提升了。 本章的重点就是阐述`TSDB V3`。以后没有特别说明`TSDB`指的就是`TSDB V3`
+本章的重点就是阐述`TSDB V3`。以后没有特别说明`TSDB`指的就是`TSDB V3`
 
 ## `TSDB V3`数据库数据文件
 

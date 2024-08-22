@@ -65,6 +65,13 @@
   TODO
 
 
-## `TSDB V3`设计简述
+## `TSDB V3`设计的改进
 
-  TODO
+由于`TSDB V2`版本面临上述的诸多问题，`TSDB V3`应运而生。目前`prometheus v2.x`使用就是`TSDB V3`。 2017年,`Prometheus v2`发布之初,将`Prometheus v2`和 `Prometheus 1.8`存储方面进行了比较(详见:[storage:Prometheus v2 vs Prometheus 1.8](https://prometheus.io/blog/2017/11/08/announcing-prometheus-2-0/#storage) ),可见`TSDB V3`对`Prometheus`的性能显著提升了。
+
+**`TSDB V3`的改进**
+
+- `TSDB V3`以时间为维度进行存储，默认每`2`小时一个`block`进行存储，减少了打开的文件数。同时，基于时间的存储便于查询时间范围的数据。同时，多个`block`可以进行合并，减少`block`数量。
+- `TSDB V3`中实现了`wal`避免了数据丢失的问题。
+- `TSDB V3`删除数据是软删除，会将删除的记录在独立的`tombstone`文件中，而不是立即从`chunk`文件删除。
+
