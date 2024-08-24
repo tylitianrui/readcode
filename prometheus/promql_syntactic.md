@@ -177,7 +177,51 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 ##### **示例1:** 逻辑运算符-交集基本使用
 
-TODO
+`A and B`过滤出`A`、`B`的标签相等的指标`A`。 文氏图表示：
+![a_and_b](./src/a_and_b.png)  
+
+
+在[http://127.0.0.1:9090/metrics](http://127.0.0.1:9090/metrics)任意选择两个样本演示，本次选取`go_gc_heap_allocs_by_size_bytes_bucket`、`go_gc_heap_frees_by_size_bytes_bucket`。
+
+```text
+# HELP go_gc_heap_allocs_by_size_bytes Distribution of heap allocations by approximate size. Bucket counts increase monotonically. Note that this does not include tiny objects as defined by /gc/heap/tiny/allocs:objects, only tiny blocks.
+# TYPE go_gc_heap_allocs_by_size_bytes histogram
+go_gc_heap_allocs_by_size_bytes_bucket{le="8.999999999999998"} 56332
+go_gc_heap_allocs_by_size_bytes_bucket{le="24.999999999999996"} 307655
+go_gc_heap_allocs_by_size_bytes_bucket{le="64.99999999999999"} 496978
+go_gc_heap_allocs_by_size_bytes_bucket{le="144.99999999999997"} 663839
+go_gc_heap_allocs_by_size_bytes_bucket{le="320.99999999999994"} 678615
+go_gc_heap_allocs_by_size_bytes_bucket{le="704.9999999999999"} 682012
+go_gc_heap_allocs_by_size_bytes_bucket{le="1536.9999999999998"} 684029
+go_gc_heap_allocs_by_size_bytes_bucket{le="3200.9999999999995"} 685018
+go_gc_heap_allocs_by_size_bytes_bucket{le="6528.999999999999"} 686019
+go_gc_heap_allocs_by_size_bytes_bucket{le="13568.999999999998"} 686417
+go_gc_heap_allocs_by_size_bytes_bucket{le="27264.999999999996"} 686895
+go_gc_heap_allocs_by_size_bytes_bucket{le="+Inf"} 687203
+go_gc_heap_allocs_by_size_bytes_sum 1.40785792e+08
+go_gc_heap_allocs_by_size_bytes_count 687203
+
+
+# HELP go_gc_heap_frees_by_size_bytes Distribution of freed heap allocations by approximate size. Bucket counts increase monotonically. Note that this does not include tiny objects as defined by /gc/heap/tiny/allocs:objects, only tiny blocks.
+# TYPE go_gc_heap_frees_by_size_bytes histogram
+go_gc_heap_frees_by_size_bytes_bucket{le="8.999999999999998"} 54089
+go_gc_heap_frees_by_size_bytes_bucket{le="24.999999999999996"} 294326
+go_gc_heap_frees_by_size_bytes_bucket{le="64.99999999999999"} 434010
+go_gc_heap_frees_by_size_bytes_bucket{le="144.99999999999997"} 583350
+go_gc_heap_frees_by_size_bytes_bucket{le="320.99999999999994"} 593938
+go_gc_heap_frees_by_size_bytes_bucket{le="704.9999999999999"} 596470
+go_gc_heap_frees_by_size_bytes_bucket{le="1536.9999999999998"} 598153
+go_gc_heap_frees_by_size_bytes_bucket{le="3200.9999999999995"} 598875
+go_gc_heap_frees_by_size_bytes_bucket{le="6528.999999999999"} 599727
+go_gc_heap_frees_by_size_bytes_bucket{le="13568.999999999998"} 600014
+go_gc_heap_frees_by_size_bytes_bucket{le="27264.999999999996"} 600467
+go_gc_heap_frees_by_size_bytes_bucket{le="+Inf"} 600723
+go_gc_heap_frees_by_size_bytes_sum 1.16556008e+08
+go_gc_heap_frees_by_size_bytes_count 600723
+```
+那么执行`go_gc_heap_allocs_by_size_bytes_bucket and go_gc_heap_frees_by_size_bytes_bucket` 如图： 
+
+![go_gc_heap_allocs_by_size_bytes_bucket and go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_heap_allocs_by_size_bytes_bucket%20and%20go_gc_heap_frees_by_size_bytes_bucket.png)
 
 
 

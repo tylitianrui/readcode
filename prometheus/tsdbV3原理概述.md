@@ -85,7 +85,7 @@ TODO -->
 
 `prometheus`中，新数据样本首先会存储于内存的`Head`中。其中`Head`中接收样本的`chunk`称之为`active chunk`。在新数据样本写入内存的`Head`时，会做一次预写日志，将新数据样本写入到`WAL`文件中。  
 
-`chunk`只能写入`120`个样本。**当`active chunk`满了**或者**当前`active chunk`已经持续了`chunkRange`了**，内存的`Head`会创建新的`chunk`来接收新数据样本(*即：新的`active chunk`*)。之前的`active chunk`数据会落盘到`chunks_head`目录中，并通过`mmap`将此部分数据映射到内存。这样`prometheus`就可以根据需要，动态将此部分数据加载到内存了。
+`chunk`只能写入`120`个样本。**当`active chunk`满了**或者**当前`active chunk`已经持续了`chunkRange`了**，内存的`Head`会创建新的`chunk`来接收新数据样本(*即：新的`active chunk`*)。之前的`active chunk`数据会落盘到`chunks_head`目录。这样`prometheus`就可以根据需要，动态将此部分数据加载到内存了。
 
 
 `chunks_head`存储的时序时间跨度超过了`chunkRange / 2 * 3`(*注：默认3小时*)，就会将前`chunkRange`时间范围的时序数据压缩到`Block`中。
@@ -319,18 +319,16 @@ WAL重放时，各个数据类型怎么处理：
 ## chunks_head原理
 
 
-回顾一下`chunks_head`在`tsdb`存储过程中的阶段  
+回顾一下`chunks_head`在`tsdb`存储过程中的阶段。当`head`的`chunk`样本数量到达`120`个时，会将此`chunk`刷盘。如果访问`M-mapped chunks`中的某段数据，操作系统就会将这段数据通过`mmap`映射到内存，而不是整个文件。
 
 ![chunks_head阶段](./src/tsdb_storage_chuns_head.drawio.png)  
 
-文件目录  
+`chunks_head`的磁盘上的文件目录  
 
 ```text
 ├── chunks_head
     └── 000001
 ```
-
-
 
 ### chunks_head编码
 
@@ -356,22 +354,38 @@ WAL重放时，各个数据类型怎么处理：
 
 **说明**  
 
-- `magic(0x0130BC91)`  占用空间`4 byte`，特定字符。`chunks_head`文件必须以`0x0130BC91`开始，否则不被认为是`chunks_head`文件
+- `magic(0x0130BC91)`  占用空间`4 byte`，特定字符。`chunks_head`文件必须以`0x0130BC91`开始，否则不被认为是`chunks_head`文件。
 - `version(00000001)`  占用空间`1 byte` 固定字符;`padding(000000000000000000000000)` 占用空间`3 byte`,占位符，内存对齐
 
 #### chunk编码
 
-```
+```text
 ┌─────────────────────┬───────────────────────┬───────────────────────┬───────────────────┬───────────────┬──────────────┬────────────────┐
-| series ref <8 byte> | mint <8 byte, uint64> | maxt <8 byte, uint64> | encoding <1 byte> | len <uvarint> | data <bytes> │ CRC32 <4 byte> │
+| seriesId <8 byte>   | mint <8 byte, uint64> | maxt <8 byte, uint64> | encoding <1 byte> | len <uvarint> | data <bytes> │ CRC32 <4 byte> │
 └─────────────────────┴───────────────────────┴───────────────────────┴───────────────────┴───────────────┴──────────────┴────────────────┘
 ```
 
 **说明**  
 
-TODO
+- `seriesId`: 占用空间`8 byte`，`Series Records`文件的`id`;
+- `mint`、`maxt`: 各占用空间`8 byte`，表示时间戳，此`chunk`中样本的时间跨度,即`mint`~`maxt`;
+- `encoding`:  占用空间`1 byte`, 编码类型;
+- `len`:     数据的长度
+- `data`:    数据
+- `CRC32`:   校验和
 
 
+### 读取数数据
+
+我们以查询某个时序在`chunks_head`的数据为例。
+一种指标数据(*同一个`SeriesId`*)会分散到很多`chunks_head`的文件的`chunk`(*我们称之为`chunks_head chunk`*)中。在内存中，一直维护着一个`SeriesId`和`chunks_head chunk`的映射关系。`tsdb`可以根据这个映射关系获取到`chunks_head chunk`的引用。`chunks_head chunk`的引用是一个`64bit`的无符号整数:前32位表示文件号，例如`000001`、`000002`...;后32位表示文件内字节偏移`offsize`。
+例如一个`chunks_head chunk`的引用是`ref`:那么文件名为`ref >> 32`;`chunk`在文件中的位置 `(ref <<  32) >> 32`
+
+
+<!-- 
+https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/chunks/head_chunks.go#L84
+https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/head_read.go#L401
+-->
 
 
 ## Block持久化
