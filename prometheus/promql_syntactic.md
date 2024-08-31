@@ -172,7 +172,29 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 #### 逻辑运算符
 
-`prometheus`支持逻辑运算符 `and`(交集)、`or`(并集)、`unless`(差集)，只用于`instant vector`之间的运算。
+`prometheus`支持逻辑运算符 `and`(交集)、`or`(并集)、`unless`(差集)，只用于`instant vector`之间的运算。为了方便读者理解，本节所有案例使用相同的样本进行说明。
+在[http://127.0.0.1:9090/metrics](http://127.0.0.1:9090/metrics)任意选择两个样本，本次选取`go_gc_duration_seconds`、`prometheus_tsdb_wal_fsync_duration_seconds`。  
+
+```text
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 0.000036501
+go_gc_duration_seconds{quantile="0.25"} 0.000103208
+go_gc_duration_seconds{quantile="0.5"} 0.000133374
+go_gc_duration_seconds{quantile="0.75"} 0.000158749
+go_gc_duration_seconds{quantile="1"} 0.0.000524
+go_gc_duration_seconds_sum 0.001737125
+go_gc_duration_seconds_count 15
+
+
+# HELP prometheus_tsdb_wal_fsync_duration_seconds Duration of write log fsync.
+# TYPE prometheus_tsdb_wal_fsync_duration_seconds summary
+prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.5"} NaN
+prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.9"} NaN
+prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.99"} NaN
+prometheus_tsdb_wal_fsync_duration_seconds_sum 0
+prometheus_tsdb_wal_fsync_duration_seconds_count 0
+```
 
 
 ##### **示例1:** 逻辑运算符-交集基本使用
@@ -180,60 +202,33 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 `A and B`过滤出`A`、`B`的标签相等的指标`A`。 文氏图表示：
 ![a_and_b](./src/a_and_b.png)  
 
+<br>
 
-在[http://127.0.0.1:9090/metrics](http://127.0.0.1:9090/metrics)任意选择两个样本演示，本次选取`go_gc_heap_allocs_by_size_bytes_bucket`、`go_gc_heap_frees_by_size_bytes_bucket`。
+上面两个`go_gc_duration_seconds`和 `prometheus_tsdb_wal_fsync_duration_seconds` 只有`quantile="0.5"`一个标签一致。那么执行`go_gc_duration_seconds  and  prometheus_tsdb_wal_fsync_duration_seconds`，则返回`go_gc_duration_seconds{quantile="0.5"} 0.000133583`。 如图： 
 
-```text
-# HELP go_gc_heap_allocs_by_size_bytes Distribution of heap allocations by approximate size. Bucket counts increase monotonically. Note that this does not include tiny objects as defined by /gc/heap/tiny/allocs:objects, only tiny blocks.
-# TYPE go_gc_heap_allocs_by_size_bytes histogram
-go_gc_heap_allocs_by_size_bytes_bucket{le="8.999999999999998"} 56332
-go_gc_heap_allocs_by_size_bytes_bucket{le="24.999999999999996"} 307655
-go_gc_heap_allocs_by_size_bytes_bucket{le="64.99999999999999"} 496978
-go_gc_heap_allocs_by_size_bytes_bucket{le="144.99999999999997"} 663839
-go_gc_heap_allocs_by_size_bytes_bucket{le="320.99999999999994"} 678615
-go_gc_heap_allocs_by_size_bytes_bucket{le="704.9999999999999"} 682012
-go_gc_heap_allocs_by_size_bytes_bucket{le="1536.9999999999998"} 684029
-go_gc_heap_allocs_by_size_bytes_bucket{le="3200.9999999999995"} 685018
-go_gc_heap_allocs_by_size_bytes_bucket{le="6528.999999999999"} 686019
-go_gc_heap_allocs_by_size_bytes_bucket{le="13568.999999999998"} 686417
-go_gc_heap_allocs_by_size_bytes_bucket{le="27264.999999999996"} 686895
-go_gc_heap_allocs_by_size_bytes_bucket{le="+Inf"} 687203
-go_gc_heap_allocs_by_size_bytes_sum 1.40785792e+08
-go_gc_heap_allocs_by_size_bytes_count 687203
-
-
-# HELP go_gc_heap_frees_by_size_bytes Distribution of freed heap allocations by approximate size. Bucket counts increase monotonically. Note that this does not include tiny objects as defined by /gc/heap/tiny/allocs:objects, only tiny blocks.
-# TYPE go_gc_heap_frees_by_size_bytes histogram
-go_gc_heap_frees_by_size_bytes_bucket{le="8.999999999999998"} 54089
-go_gc_heap_frees_by_size_bytes_bucket{le="24.999999999999996"} 294326
-go_gc_heap_frees_by_size_bytes_bucket{le="64.99999999999999"} 434010
-go_gc_heap_frees_by_size_bytes_bucket{le="144.99999999999997"} 583350
-go_gc_heap_frees_by_size_bytes_bucket{le="320.99999999999994"} 593938
-go_gc_heap_frees_by_size_bytes_bucket{le="704.9999999999999"} 596470
-go_gc_heap_frees_by_size_bytes_bucket{le="1536.9999999999998"} 598153
-go_gc_heap_frees_by_size_bytes_bucket{le="3200.9999999999995"} 598875
-go_gc_heap_frees_by_size_bytes_bucket{le="6528.999999999999"} 599727
-go_gc_heap_frees_by_size_bytes_bucket{le="13568.999999999998"} 600014
-go_gc_heap_frees_by_size_bytes_bucket{le="27264.999999999996"} 600467
-go_gc_heap_frees_by_size_bytes_bucket{le="+Inf"} 600723
-go_gc_heap_frees_by_size_bytes_sum 1.16556008e+08
-go_gc_heap_frees_by_size_bytes_count 600723
-```
-那么执行`go_gc_heap_allocs_by_size_bytes_bucket and go_gc_heap_frees_by_size_bytes_bucket` 如图： 
-
-![go_gc_heap_allocs_by_size_bytes_bucket and go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_heap_allocs_by_size_bytes_bucket%20and%20go_gc_heap_frees_by_size_bytes_bucket.png)
-
+![go_gc_heap_allocs_by_size_bytes_bucket and go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_and_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
 
 ##### **示例2:** 逻辑运算符-并集基本使用
 
-TODO
+`A or B` 文氏图表示：
+![a_or_b](./src/a_or_b.png)  
 
+<br>
+
+上面两个`go_gc_duration_seconds`和 `prometheus_tsdb_wal_fsync_duration_seconds` 只有`quantile="0.5"`一个标签一致，其他都不一致。那么执行`go_gc_duration_seconds or  prometheus_tsdb_wal_fsync_duration_seconds`，则返回`go_gc_duration_seconds`和 `prometheus_tsdb_wal_fsync_duration_seconds`的并集。 如图： 
+
+
+![go_gc_heap_allocs_by_size_bytes_bucket or go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_or_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
 ##### **示例3:** 逻辑运算符-差集基本使用
 
-TODO
+`A unless B` 文氏图表示：
+![a_unless_b](./src/a_unless_b.png)  
 
+上面两个`go_gc_duration_seconds`和 `prometheus_tsdb_wal_fsync_duration_seconds` 只有`quantile="0.5"`一个标签一致，其他都不一致。那么执行`go_gc_duration_seconds unless  prometheus_tsdb_wal_fsync_duration_seconds`，则返回`go_gc_duration_seconds`和 `prometheus_tsdb_wal_fsync_duration_seconds`的差集。 如图： 
+
+![go_gc_heap_allocs_by_size_bytes_bucket unless go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_unless_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
 ##### **示例4:** 组合使用
 
@@ -255,3 +250,16 @@ TODO
 ### 聚合操作符
 
  聚合操作符将在[聚合操作符与函数](./promql_aggregation_implementation.md)详细说明
+
+
+```
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 3.1791e-05
+go_gc_duration_seconds{quantile="0.25"} 0.000132875
+go_gc_duration_seconds{quantile="0.5"} 0.000149459
+go_gc_duration_seconds{quantile="0.75"} 0.000164084
+go_gc_duration_seconds{quantile="1"} 0.000354292
+go_gc_duration_seconds_sum 0.12827501
+go_gc_duration_seconds_count 910
+```
