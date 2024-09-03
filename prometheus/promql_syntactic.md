@@ -243,20 +243,3 @@ TODO
 #### 多对一和一对多
 
 TODO
-
-### 聚合操作符
-
- 聚合操作符将在[聚合操作符与函数](./promql_aggregation_implementation.md)详细说明
-
-
-```
-# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
-# TYPE go_gc_duration_seconds summary
-go_gc_duration_seconds{quantile="0"} 3.1791e-05
-go_gc_duration_seconds{quantile="0.25"} 0.000132875
-go_gc_duration_seconds{quantile="0.5"} 0.000149459
-go_gc_duration_seconds{quantile="0.75"} 0.000164084
-go_gc_duration_seconds{quantile="1"} 0.000354292
-go_gc_duration_seconds_sum 0.12827501
-go_gc_duration_seconds_count 910
-```
