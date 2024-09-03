@@ -230,9 +230,6 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 ![go_gc_heap_allocs_by_size_bytes_bucket unless go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_unless_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
-##### **示例4:** 组合使用
-
-TODO
 
 ### 向量匹配Vector Matching
 
