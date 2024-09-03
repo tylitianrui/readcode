@@ -36,7 +36,7 @@
   - [tsdb v3源码解析](tsdbv3源码解析.md)
 - promql
   - [promql基本语法](promql_syntactic.md)
-  - [聚合操作符与函数](aggregation_operators_functions.md)
+  - [聚合操作符与函数](promql_aggregation_operators_functions.md)
   - [promql实践与应用](promql_practice.md)
   - [源码分析:promql解析过程](promql_implementation.md)
   - [源码分析:聚合操作符实现](promql_aggregation_implementation.md)

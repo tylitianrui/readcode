@@ -1,28 +1,30 @@
 # PromQL聚合操作符与函数
 
+在实际工作中，`sum`、`avg`、`rate`、`increase`等经常被使用到，但很少人关注哪些是聚合操作符，哪些又是函数。有些伙伴在官方文档的函数部分查找`sum`、`avg`的使用是找不到的。因为`sum`、`avg`并不是函数，而是`prometheus`内置的**聚合操作符**。聚合操作符和函数的底层实现也不一样。本涨将详细说明聚合操作符和函数的使用，后续章节将介绍聚合操作符和函数的底层原理和实现。
+
 ## 聚合操作符
 
-工作中经常使用的 `sum`、`avg`等经常与函数(例如`rate`、`increase`等)混为一谈，其实 `sum`、`avg`并不是函数，而是`prometheus`内置的聚合操作符。聚合操作符和函数的底层实现也不一样。这就是为什么`prometheus`函数的官方文档里找不到他们的原因。  
-聚合操作符用于聚合某一个`instant vector`的数据的。  
-<br>
-聚合操作符目前有12个：  
+聚合操作符用于聚合某一个`instant vector`的数据的。上述中`sum`、`avg`就是聚合操作符，目前`prometheus`有12个聚合操作符：  
 
-- **sum** 累加
-- **avg**  平均值
-- min 最小值
-- max 最大值
-- stddev 标准差
-- stdvar 标准方差
-- count  计数
-- count_values 对value进行计数
-- bottomk  最少的n条时序
-- topk  最多的n条时序
-- quantile  分位数
-- group (all values in the resulting vector are 1)
-  
+| 操作符   | 作用     |说明     |
+| :-----| :---- | :---- |
+| **sum** | 累加 |   |
+| **avg**  | 平均值 |  |
+| **min**  | 最小值 |  |
+| **max**  | 最大值 |  |
+| **stddev**  | 标准差 |  |
+| **stdvar**  | 标准方差 |  |
+| **count**  | 计数 |  |
+| **count_values**  | 对value进行计数 |  |
+| **bottomk**  | 最少的n条时序 |  |
+| **topk**  | 最多的n条时序 |  |
+| **quantile**  | 分位数 |  |
+| **group**  | 分组 |all values in the resulting vector are 1  |
+
+
 <br>
 
-使用方法
+**使用方法**
 ```
 <aggr-op> [without|by (<label list>)] ([parameter,] <vector expression>)
 ```
@@ -30,6 +32,7 @@
 ```
 <aggr-op>([parameter,] <vector expression>) [without|by (<label list>)]
 ```
+
 
 
 ### sum
