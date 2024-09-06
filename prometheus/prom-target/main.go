@@ -130,3 +130,4 @@ func CpuUseGauge() {
 	avgLoad.WithLabelValues("15").Set(loadInfo.Load15)
 
 }
+

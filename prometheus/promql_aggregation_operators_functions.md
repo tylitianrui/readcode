@@ -6,25 +6,25 @@
 
 聚合操作符用于聚合某一个`instant vector`的数据的。上述中`sum`、`avg`就是聚合操作符，目前`prometheus`有12个聚合操作符：  
 
-| 操作符   | 作用     |说明     |
-| :-----| :---- | :---- |
-| **sum** | 累加 |   |
-| **avg**  | 平均值 |  |
-| **min**  | 最小值 |  |
-| **max**  | 最大值 |  |
-| **stddev**  | 标准差 |  |
-| **stdvar**  | 标准方差 |  |
-| **count**  | 计数 |  |
-| **count_values**  | 对value进行计数 |  |
-| **bottomk**  | 最少的n条时序 |  |
-| **topk**  | 最多的n条时序 |  |
-| **quantile**  | 分位数 |  |
-| **group**  | 分组 |all values in the resulting vector are 1  |
+| 操作符   | 作用     |说明     |应用场景     |
+| :-----| :---- | :---- |:---- |
+| **sum** | 累加 | 计算指定指标的所有样本值的和|计算资源使用总量、请求总数等，例如计算cpu使用总率，总内存使用量|
+| **avg**  | 平均值 |  ||
+| **min**  | 最小值 |  ||
+| **max**  | 最大值 |  ||
+| **stddev**  | 标准差 |  ||
+| **stdvar**  | 标准方差 |  ||
+| **count**  | 计数 |  ||
+| **count_values**  | 对value进行计数 |  ||
+| **bottomk**  | 最少的n条时序 |  ||
+| **topk**  | 最多的n条时序 |  ||
+| **quantile**  | 分位数 |  ||
+| **group**  | 分组 |all values in the resulting vector are 1  ||
 
 
-<br>
 
-**使用方法**
+### 使用方法
+
 ```
 <aggr-op> [without|by (<label list>)] ([parameter,] <vector expression>)
 ```
@@ -33,6 +33,14 @@
 <aggr-op>([parameter,] <vector expression>) [without|by (<label list>)]
 ```
 
+<br>
+
+**说明**
+
+- **aggr-op** 聚合操作符
+- **label list** 
+- **without**
+- **by**
 
 
 ### sum

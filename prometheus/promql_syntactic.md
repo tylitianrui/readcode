@@ -233,7 +233,16 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 ### 向量匹配Vector Matching
 
-#### 关键字
+在上面讲述里，我们可以看到，向量与向量之间运算时会基于默认的匹配规则:依次找到与左侧向量**标签完全一致**的右边向量元素进行运算;如果标签不一致，则直接丢弃。
+
+如果计算**http状态码为302的请求数**占**采集metrics请求数**的比例，即(*`prometheus_http_requests_total{code ="302"}` 与 `prometheus_http_requests_total{handler="/metrics"}`的比值*)。如果直接使用`prometheus_http_requests_total{code ="302"} / prometheus_http_requests_total{handler="/metrics"}` 计算，可以看到没有匹配任何结果。 如图:  
+<br>
+
+![向量匹配错误案例](./src/vector_matching_error_demo.png)
+
+原因就在于需要左右侧标签完全一致，才可以匹配。 显然，这种默认的匹配规则比较死板，本节介绍向量匹配的更多用法。
+
+<!-- prometheus_http_requests_total{code ="302"} / ignoring(code,handler) prometheus_http_requests_total{handler="/metrics"} -->
 
 
 #### 一对一匹配
