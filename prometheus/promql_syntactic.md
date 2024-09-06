@@ -236,19 +236,61 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 在上面讲述里，我们可以看到，向量与向量之间运算时会基于默认的匹配规则:依次找到与左侧向量**标签完全一致**的右边向量元素进行运算;如果标签不一致，则直接丢弃。
 
 如果计算**http状态码为302的请求数**占**采集metrics请求数**的比例，即(*`prometheus_http_requests_total{code ="302"}` 与 `prometheus_http_requests_total{handler="/metrics"}`的比值*)。如果直接使用`prometheus_http_requests_total{code ="302"} / prometheus_http_requests_total{handler="/metrics"}` 计算，可以看到没有匹配任何结果。 如图:  
+
 <br>
 
-![向量匹配错误案例](./src/vector_matching_error_demo.png)
+![向量匹配错误案例](./src/vector_matching_error_demo.png)  
 
-原因就在于需要左右侧标签完全一致，才可以匹配。 显然，这种默认的匹配规则比较死板，本节介绍向量匹配的更多用法。
+原因  
+
+|`prometheus_http_requests_total{code ="302"}`| `prometheus_http_requests_total{handler="/metrics"}`  |匹配结果(标签完全匹配)   |分析   |
+| :-----| :---- | :---- | :---- |
+| `prometheus_http_requests_total{code="302", handler="/", instance="localhost:9090", job="prometheus"}      2` | `prometheus_http_requests_total{code="200", handler="/metrics", instance="localhost:9090", job="prometheus"}  1010` | 无  |标签`code`、`handler`不匹配 |
+
+原因就在于需要左右侧标签完全一致，才可以匹配, 本例子中不能完全匹配，所以结果为空。
+
+
+显然，这种默认的匹配规则比较死板，本节介绍向量匹配的更多用法。
+`PromQL`中有中匹配模式：`一对一（one-to-one`）,`多对一（many-to-one）或一对多（one-to-many）`。
 
 <!-- prometheus_http_requests_total{code ="302"} / ignoring(code,handler) prometheus_http_requests_total{handler="/metrics"} -->
 
+#### 一对一向量匹配
 
-#### 一对一匹配
+`一对一`向量匹配就是操作符**左右两侧**都是唯一的样本值，并不是结果只有唯一的样本值，输出结果可以是多对。 前文所述的**标签完全一致**匹配，都是一对一向量匹配的案例。示意图如下：  
 
-TODO
+![一对一示意图](./src/one_to_one_shiyitu.png)
 
-#### 多对一和一对多
+
+
+如果只需要操作符左右两侧**部分标签进行匹配**，就需要使用关键字进行处理
+
+- `on(label1[,label2, label3,...])`  只使用指定的`label`进行匹配,例如 `on(code，handler)` 只使用`code`，`handler`标签进行匹配
+- `ignoring(label1[,label2, label3,...])` 排除指定的`label`，使用剩余的`label`进行匹配,例如 `ignoring(code，handler)` 标签`code`，`handler`不参与匹配。
+
+
+上述实例
+
+|`prometheus_http_requests_total{code ="302"}`| `prometheus_http_requests_total{handler="/metrics"}`  |匹配结果(标签完全匹配)   |分析   |
+| :-----| :---- | :---- | :---- |
+| `prometheus_http_requests_total{code="302", handler="/", instance="localhost:9090", job="prometheus"}      2` | `prometheus_http_requests_total{code="200", handler="/metrics", instance="localhost:9090", job="prometheus"}  1010` | 无  |标签`code`、`handler`不匹配 |
+
+<br>
+
+那我们使用`ignoring(code，handler)`让标签`code`，`handler`不参与匹配，即`prometheus_http_requests_total{code ="302"} / ignoring(code,handler) prometheus_http_requests_total{handler="/metrics"}`,则可以获取**http状态码为302的请求数**占**采集metrics请求数**的比例。如图  
+
+![向量匹配案例](./src/vector_matching_ok_demo.png) 
+
+由图可以看到，匹配的标签只有`instance` ,`job`。
+
+同样我们可以使用`on`来处理上述案例，我们只需要使用`instance` ,`job`标签匹配,即`prometheus_http_requests_total{code ="302"} / on(instance,job) prometheus_http_requests_total{handler="/metrics"}` 也可以达到相同的效果。
+
+
+注：`一对一`向量匹配并不是结果只有唯一的样本值，输出结果可以是多对。 例如 `prometheus_http_requests_total{code !="302"} /(prometheus_http_requests_total{handler=~"/api/v1/label.*"} + 1)` 结果就是多对。
+
+![多对一对一向量匹配](./src/vector_matching_1to1_many_groups.png) 
+
+
+#### 一对多或者多对一向量匹配
 
 TODO
