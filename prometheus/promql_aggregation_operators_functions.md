@@ -4,7 +4,7 @@
 
 ## 聚合操作符
 
-聚合操作符用于聚合某一个`instant vector`的数据的。上述中`sum`、`avg`就是聚合操作符，目前`prometheus`有12个聚合操作符：  
+聚合操作符用于聚合某一个`instant vector`的数据的。上述中`sum`、`avg`就是聚合操作符，目前`prometheus`有`12`个聚合操作符：  
 
 | 操作符   | 作用     |说明     |应用场景     |
 | :-----| :---- | :---- |:---- |
@@ -25,29 +25,102 @@
 
 ### 使用方法
 
-```
+```text
 <aggr-op> [without|by (<label list>)] ([parameter,] <vector expression>)
 ```
+
 或者
-```
+
+```text
 <aggr-op>([parameter,] <vector expression>) [without|by (<label list>)]
 ```
 
-<br>
 
 **说明**
 
 - **aggr-op** 聚合操作符
-- **label list** 
+- **label list** 标签列表
 - **without**
-- **by**
+- **by** 关键字`by`用于分组
 
 
-### sum
+#### 使用案例一：统计QPS>0的接口
 
-TODO
+`prometheus_http_requests_total`记录`prometheus`接受到的`http`请求的总量。
+截取部分指标样本如下：
 
-<br>
+```text
+prometheus_http_requests_total{code="200",handler="/graph"} 6
+prometheus_http_requests_total{code="200",handler="/manifest.json"} 6
+prometheus_http_requests_total{code="200",handler="/metrics"} 4032
+...
+```
+
+计算每个接口的`QPS`的`promql`语句
+
+```text
+sum(rate(prometheus_http_requests_total[5m])) by (handler) > 0
+```
+
+效果如图：  
+
+![统计QPS>0的接口](./src/qps_sum_demo.png)
+
+
+说明：
+
+- `rate(prometheus_http_requests_total[5m])` 统计`5m`内`http`的请求速率,每个`prometheus_http_requests_total`指标的变化率  
+- `sum(<expr>) by (handler)` 以`handler`标签为维度进行分组,计算每组的和
+- `<expr> > 0` 判断是否大于`0`，大于`0`的予以保留，否则丢弃
+
+**分步解析**  
+
+以`/api/v1/query_range`接口为例解析每步的执行过程,`/api/v1/query_range`相关指标如下：  
+
+
+```text
+prometheus_http_requests_total{code="200",handler="/api/v1/query_range"} 234
+prometheus_http_requests_total{code="400",handler="/api/v1/query_range"} 477
+prometheus_http_requests_total{code="422",handler="/api/v1/query_range"} 4
+```
+
+执行步骤解析如下：
+
+**第一步**：执行`rate(prometheus_http_requests_total[5m])`  
+`/api/v1/query_range`接口的执行结果如下：
+
+```text
+prometheus_http_requests_total{code="200",handler="/api/v1/query_range"}  0.15789362881663987
+prometheus_http_requests_total{code="400",handler="/api/v1/query_range"}  0.5438558325906485
+prometheus_http_requests_total{code="422",handler="/api/v1/query_range"}  0
+```
+
+**第二步**：`sum(rate(prometheus_http_requests_total[5m])) by (handler)`  
+
+将第一步的结果按照`handler`分组，那么`/api/v1/query_range`接口的执行结果就是`0.15789362881663987 + 0.5438558325906485 + 0 = 0.7017494614072883`
+
+
+**第三步**：`sum(rate(prometheus_http_requests_total[5m])) by (handler)  > 0` 
+筛选第二步(*即：`sum(rate(prometheus_http_requests_total[5m])) by (handler)`*)结果大于0的指标，`/api/v1/query_range`接口部分的计算结果为`0.7017494614072883 > 0` 保留。
+
+`/api/v1/query_range`执行结果如图：
+
+![`/api/v1/query_range`分步解析](./src/fenbujiexi_qps_sum_demo.png)
+
+
+#### 使用案例二：统计状态码大于400的接口QPS
+
+计算每个接口的`QPS`的`promql`语句
+
+```text
+sum(irate(prometheus_http_requests_total{code =~ "[4|5].*"}[5m])) by (handler,code)  > 0
+```
+
+效果如图：  
+
+![统计状态码大于400的接口QPS](./src/qps_sum_demo_400.png)
+
+
 
 ### avg
 
