@@ -36,15 +36,14 @@
 ```
 
 
-**说明**
+**说明**  
 
 - **aggr-op** 聚合操作符
+- **by** 指定参与聚合操作的标签，使用`by (label1,label2,...)`
+- **without** 不参与聚合操作的标签，`by`操作的取反，使用`without (label1,label2,...)`
 - **label list** 标签列表
-- **without**
-- **by** 关键字`by`用于分组
 
-
-#### 使用案例一：统计QPS>0的接口
+#### 案例一：统计QPS>0的接口
 
 `prometheus_http_requests_total`记录`prometheus`接受到的`http`请求的总量。
 截取部分指标样本如下：
@@ -97,7 +96,7 @@ prometheus_http_requests_total{code="422",handler="/api/v1/query_range"}  0
 
 **第二步**：`sum(rate(prometheus_http_requests_total[5m])) by (handler)`  
 
-将第一步的结果按照`handler`分组，那么`/api/v1/query_range`接口的执行结果就是`0.15789362881663987 + 0.5438558325906485 + 0 = 0.7017494614072883`
+将第一步的结果按照`handler`分组，统计每组的和。接口`/api/v1/query_range`的指标和为`0.15789362881663987 + 0.5438558325906485 + 0 = 0.7017494614072883`
 
 
 **第三步**：`sum(rate(prometheus_http_requests_total[5m])) by (handler)  > 0` 
@@ -108,7 +107,7 @@ prometheus_http_requests_total{code="422",handler="/api/v1/query_range"}  0
 ![`/api/v1/query_range`分步解析](./src/fenbujiexi_qps_sum_demo.png)
 
 
-#### 使用案例二：统计状态码大于400的接口QPS
+#### 案例二：统计状态码大于400的接口QPS
 
 计算每个接口的`QPS`的`promql`语句
 
@@ -121,44 +120,21 @@ sum(irate(prometheus_http_requests_total{code =~ "[4|5].*"}[5m])) by (handler,co
 ![统计状态码大于400的接口QPS](./src/qps_sum_demo_400.png)
 
 
+#### 案例三：统计最近5分钟请求量前10的接口
 
-### avg
-
-TODO
-
-### 分组by
-
-使用关键字 `by`进行分组
-  
-例如: 获取请求`/api/v1/query`的请求总数量
+`promql`语句如下：
 
 ```text
-sum(prometheus_http_requests_total{handler="/api/v1/query"})
-
+topk(10, sum without (instance,job,code) (increase(prometheus_http_requests_total{}[5m])))
 ```
 
-  ![prometheus_http_requests_total_sum](./src/prometheus_http_requests_total_sum.png)  
+![统计QPS前10的接口](./src/top_10_demo.png)
 
-*注：如果prometheus里暂时没有监控数据，可以手动向prometheus发请求，使prometheus获得http监控数据。例如：*
+说明：
 
-```shell
-
-curl -X OPTIONS  http://127.0.0.1:9090/api/v1/query  
-curl -X PUT http://127.0.0.1:9090/api/v1/query
-curl   http://127.0.0.1:9090/api/v1/query  
-
-```
-
-针对上例，获取请求`/api/v1/query`的请求总数量,并且以状态码分组统计  
-
-```shell
-
-sum(prometheus_http_requests_total{handler="/api/v1/query"}) by (code)
-
-```
-
-  ![prometheus_http_requests_total_sum](./src/prometheus_http_requests_total_sum_by_code.png)  
-
+- `without`是`by`的取反。本例中`without (instance,job,code)`排除标签`instance`,`job`,`code`,剩余的标签参与分组聚合。因为`prometheus_http_requests_total` 只有4个标签：`handler`、`instance`、`job`、`code`，那么`without (instance,job,code)`与 `by (handler)`等价关系。
+- `sum without (instance,job,code) (increase(prometheus_http_requests_total{}[5m]))` 统计出5min内所有接口的请求量
+- `topk(10, <expr>)` 排序，找出`top 10`的指标
 
 
 
@@ -172,7 +148,8 @@ Prometheus提供了其它大量的内置函数，可以对时序数据进行的�
 
 **使用**：`increase(v range-vector)`  
 
-例如:
+例如:  
+
 - `increase(prometheus_http_requests_total{handler="/metrics"}[1m])`
 - `increase(prometheus_tsdb_reloads_total{instance='localhost:9090'}[40s])`
 
