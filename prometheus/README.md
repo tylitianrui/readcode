@@ -7,7 +7,7 @@
   - [阅读环境](项目简述与准备.md#阅读环境)
   - [下载代码](项目简述与准备.md#下载代码)
   - [手动编译安装与运行](项目简述与准备.md#下载代码)
-  - [开发应用接入prometheus监控](项目简述与准备.md#开发应用接入prometheus监控)
+  <!-- - [开发应用接入prometheus监控](项目简述与准备.md#开发应用接入prometheus监控) -->
   - [拉取演示](项目简述与准备.md#拉取演示)
 - prometheus简述
   - [prometheus架构](prometheus简述.md)
@@ -50,5 +50,11 @@
 
 
 # Alert Manager
+
+TODO
+
+
+
+# Thanos
 
 TODO
