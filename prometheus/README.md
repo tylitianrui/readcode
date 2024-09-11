@@ -5,27 +5,26 @@
 - 项目简述与准备
   - [代码版本](项目简述与准备.md#代码版本)
   - [阅读环境](项目简述与准备.md#阅读环境)
-  - [下载代码](项目简述与准备.md#下载代码)
   - [手动编译安装与运行](项目简述与准备.md#下载代码)
-  <!-- - [开发应用接入prometheus监控](项目简述与准备.md#开发应用接入prometheus监控) -->
   - [拉取演示](项目简述与准备.md#拉取演示)
 - prometheus简述
   - [prometheus架构](prometheus简述.md)
   - [prometheus功能介绍](prometheus功能介绍.md)
   - [prometheus server模块介绍](prometheus_server模块.md)
-  - [prometheus server启动-main函数分析](prometheus_server启动-main函数分析.md)
+  - [prometheus server启动-main函数分析](prometheus_server启动.md)
+  - [基于prometheus client监控应用](基于prometheus_client监控应用.md)
 - 服务发现
   - [服务发现简述](discovery简述.md)
   - [prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
   - [prometheus服务发现的核心逻辑](discovery_core_logic.md)
-  - [prometheus服务发现的实现 todo](discovery_core_implementation.md)
-  - [kubernetes协议的服务发现 todo](discovery_k8s_implementation.md)
+  - [prometheus服务发现的实现](discovery_core_implementation.md)
+  - [kubernetes协议的服务发现](discovery_k8s_implementation.md)
 - scrape
   - [数据采集scrape模块简介](scrape_core_logic.md)
   - [数据采集scrape模块代码分析](scrape_work.md)
 - Label和Relabeling
-  - [Label和Relabeling使用 todo](Label和Relabeling.md)
-  - [Label和Relabeling代码解析 todo](Label和Relabeling.md)
+  - [Label和Relabeling使用](Label和Relabeling.md)
+  - [Label和Relabeling代码解析](Label和Relabeling.md)
 - 存储模块
   - todo
 - 时序数据库
