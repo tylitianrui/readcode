@@ -78,13 +78,96 @@ prometheus
 
 `github.com/oklog/run` 有两个主要方法:
 
-- `func (g *Group) Add(execute func() error, interrupt func(error))`  注册执行函数`execute`、退出函数`interrupt`，为每个执行函数`execute` 都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，就会执行所有的退出函数`interrupt`进行退出、回收等“善后”工作。
-- `func (g *Group) Run() error` 运行
+- `func (g *Group) Add(execute func() error, interrupt func(error))` 有两个参数：  
+  - 注册执行函数`execute`：实际需要执行的工作
+  - 退出函数`interrupt`：退出函数`interrupt`进行退出、回收等“善后”工作
+- `func (g *Group) Run() error` 为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序可根据错误处理退出、回收资源等“善后”工作。
+
 
 **使用示例**  
 
+下面代码运行三个`goroutine`：监听终端信号的协程、`Xtimer1`协程和`Xtimer2`协程打印当前时间。当收到终端信号，关闭所有协程。
+
 ```golang
-// todo
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/oklog/run"
+)
+
+func main() {
+	term := make(chan os.Signal, 1)
+	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+
+	var g run.Group
+	time1 := NewXtimer("Xtimer1")
+	time2 := NewXtimer("Xtimer2")
+
+	g.Add(
+		func() error {
+			select {
+			case sig := <-term:
+				fmt.Println("接收到系统信号", sig.String())
+			}
+			return fmt.Errorf("接收到系统信号")
+		},
+		func(err error) {
+			fmt.Println("信号监听关闭")
+		},
+	)
+
+	g.Add(
+		time1.PrintTime, time1.Stop,
+	)
+	g.Add(
+		time2.PrintTime, time2.Stop,
+	)
+	if err := g.Run(); err != nil {
+		os.Exit(1)
+	}
+
+}
+
+type Xtimer struct {
+	Name   string
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+func NewXtimer(name string) *Xtimer {
+	ctx, cancel := context.WithCancel(context.TODO())
+	return &Xtimer{
+		Name:   name,
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
+
+func (t *Xtimer) PrintTime() error {
+	for {
+		select {
+		case <-t.ctx.Done():
+			fmt.Println(t.Name, "退出")
+			return fmt.Errorf("%v stop", t.Name)
+		default:
+			time.Sleep(2 * time.Second)
+			fmt.Println(t.Name, time.Now())
+		}
+	}
+
+}
+
+func (t *Xtimer) Stop(err error) {
+	t.cancel()
+}
+
 ```
 
 
