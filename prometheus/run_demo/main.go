@@ -12,10 +12,10 @@ import (
 )
 
 func main() {
+	var g run.Group
 	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 
-	var g run.Group
 	time1 := NewXtimer("Xtimer1")
 	time2 := NewXtimer("Xtimer2")
 

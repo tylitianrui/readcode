@@ -54,6 +54,6 @@ TODO
 
 
 
-# Thanos
+# PushGateway
 
 TODO
