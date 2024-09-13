@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  clickhouse:
+    image: victoriametrics/victoria-metrics
+    container_name: victoriametrics
+    ports:
+      - "8428:8428"
+    env_file:
+      - env
+    volumes:
+    - ./data:/victoria-metrics-data:rw
+
