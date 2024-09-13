@@ -265,7 +265,7 @@ remote_write:
 
 说明:  
 
-- url 用于指定远程写的http服务地址,即`Adaptor`的地址。必选配置。
+- url 用于指定远程写的`http`服务地址,即`Adaptor`的地址。必选配置。
 
 通过`HTTP`协议,`Prometheus`调用`remote_write.url`接口,将采集到的数据发送给`Adaptor`。`Adaptor`会数据存储在第三方存储里。列举部分实现了远程写的第三方存储： 
 
