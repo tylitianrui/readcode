@@ -415,16 +415,20 @@ func (m *Manager) reload() {
 
 ```
 
-### relabel与获取target信息
-TODO
+### 标签处理与获取target信息  
 
-#### relabel解析
-TODO
+在之前已经获取到服务发现的所有信息了，下面就需要完成两件工作：
+
+- 处理标签
+- 将服务发现的信息转换成拉取指标地址
+
+#### 标签处理
 
 详见[relabel实践与代码分析](./relabel.md)
 
 
 #### target转换成具体的拉取目标
+
 TODO
 
 ### scrape拉取指标
@@ -433,4 +437,5 @@ TODO
 
 
 ### 指标存储
+
 TODO
