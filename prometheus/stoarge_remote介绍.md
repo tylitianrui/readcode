@@ -48,7 +48,47 @@ remote_write:
 
 我们以 `prometheus` +`VictoriaMetrics` + `grafana`  演示说明：
 
-1. 以docker 安装`VictoriaMetrics`
+1. `docker`环境运行 `VictoriaMetrics`
 
+[docker-compose.yaml](./VictoriaMetrics/docker-compose.yaml) 内容:  
 
+```yaml
+version: '3'
+
+services:
+  clickhouse:
+    image: victoriametrics/victoria-metrics
+    container_name: victoriametrics
+    ports:
+      - "8428:8428"
+    env_file:
+      - env
+    volumes:
+    - ./data:/victoria-metrics-data:rw
+```
+
+2. `grafana` 配置数据源`VictoriaMetrics`
+
+3. 配置`prometheus`远程存储
+
+```yaml
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+remote_write:   
+    - url: http://<VictoriaMetrics>:8428/api/v1/write 
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    static_configs:
+      - targets: ["localhost:9090"]
+
+```
 
