@@ -1,7 +1,13 @@
 # 服务发现的核心逻辑
 
 
-`prometheus`的服务发现由`Discovery Manager`进行管理和维护的。`Discovery Manager`维护三种协程实现服务发现，每种协程负责不同的工作：
+`prometheus`的服务发现由`Discovery Manager`进行管理和维护的。`prometheus 2.x`实现了两个`DiscoveryManager`：
+
+- [legacymanager](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/legacymanager/manager.go#L87) 定义文件[`discovery/legacymanager/manager.go`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/legacymanager/manager.go) 旧版本`DiscoveryManager`，`prometheus 2.x`中默认使用的`DiscoveryManager`，但在本文中没有明确说明，指的就是[legacymanager](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/legacymanager/manager.go#L87)。
+- [manager](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/manager.go#L133) 定义文件[`discovery/manager.go`](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/manager.go)  新版本的`DiscoveryManager`。`prometheus 2.x`启动时，设置参数`new-service-discovery-manager`则使用新新版本的`DiscoveryManager`。`2024.09.05`发布的[v3.0.0-beta.0](https://github.com/prometheus/prometheus/releases/tag/v3.0.0-beta.0)指出`prometheus 3.x`默认使用新的`DiscoveryManager`，而不再使用老版本[legacymanager](https://github.com/prometheus/prometheus/blob/v2.53.0/discovery/legacymanager/manager.go#L87)。本系列
+
+
+`Discovery Manager`维护三种协程实现服务发现，每种协程负责不同的工作：
 
 - 服务发现协程`discovery goroutine`
 - 更新协程`updater goroutine`

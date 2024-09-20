@@ -19,6 +19,7 @@
   - [prometheus服务发现的核心逻辑](discovery_core_logic.md)
   - [prometheus服务发现的实现](discovery_core_implementation.md)
   - [kubernetes协议的服务发现](discovery_k8s_implementation.md)
+  - [新版本DiscoveryManager](discovery_新版本DiscoveryManager.md)
 - scrape
   - [数据采集scrape模块简介](scrape_core_logic.md)
   - [数据采集scrape模块代码分析](scrape_work.md)
