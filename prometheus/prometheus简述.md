@@ -3,7 +3,7 @@
 
 ## prometheus监控系统的架构
 
-![prometheus architecture](src/architecture.png "prometheus architecture")
+![prometheus architecture](./src/architecture.png "prometheus architecture")
 
 
 ## 核心组件
