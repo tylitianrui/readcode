@@ -26,7 +26,7 @@
   - [Label和Relabeling使用](Label和Relabeling.md)
   - [Label和Relabeling代码解析](Label和Relabeling.md)
 - 存储模块
-  - todo
+  - [存储模块简述](存储模块简述.md)
 - 时序数据库
   - [时序数据](时序数据.md)
   - [时序数据库](时序数据库.md)

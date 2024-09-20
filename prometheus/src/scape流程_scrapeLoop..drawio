@@ -1,0 +1,82 @@
+<mxfile host="Electron" modified="2024-09-15T20:12:28.108Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.6.1 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="UDa7BX-HqYVUM0EHxUUd" version="24.6.1" type="device">
+  <diagram name="第 1 页" id="OPNZHjLj4EeVt9BAlshu">
+    <mxGraphModel dx="607" dy="769" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;entryX=-0.008;entryY=0.529;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="fdpDCFg-NzPG3DscGwCP-29" target="fdpDCFg-NzPG3DscGwCP-64" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1880" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="qRgv9BsmHJP2Pb30_IeC-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="fdpDCFg-NzPG3DscGwCP-29" target="qRgv9BsmHJP2Pb30_IeC-4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-29" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="1370" y="240" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-46" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;scrapePool&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1400" y="255" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-64" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="2010" y="90" width="360" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-101" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="2070" y="120" width="280" height="285" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-73" value="&lt;article data-content=&quot;[{&amp;quot;type&amp;quot;:&amp;quot;block&amp;quot;,&amp;quot;id&amp;quot;:&amp;quot;wYMw-1721447536406&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;code&amp;quot;,&amp;quot;data&amp;quot;:{&amp;quot;language&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;theme&amp;quot;:&amp;quot;default&amp;quot;,&amp;quot;version&amp;quot;:1},&amp;quot;nodes&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;block&amp;quot;,&amp;quot;id&amp;quot;:&amp;quot;lbsN-1721454408444&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;code-line&amp;quot;,&amp;quot;data&amp;quot;:{},&amp;quot;nodes&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;text&amp;quot;,&amp;quot;id&amp;quot;:&amp;quot;d9yT-1721454408442&amp;quot;,&amp;quot;leaves&amp;quot;:[{&amp;quot;text&amp;quot;:&amp;quot;scrapeLoop&amp;quot;,&amp;quot;marks&amp;quot;:[]}]}]}],&amp;quot;state&amp;quot;:{}}]&quot;&gt;&lt;div data-language=&quot;&quot; style=&quot;white-space-collapse: preserve;&quot; data-theme=&quot;default&quot;&gt;scrapeLoop&lt;/div&gt;&lt;/article&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="2040" y="90" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-74" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;为每个target创建独立的&lt;span style=&quot;white-space-collapse: preserve;&quot;&gt;scrapeLoop&lt;/span&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1829" y="190" width="136" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-97" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="fdpDCFg-NzPG3DscGwCP-81" target="fdpDCFg-NzPG3DscGwCP-83" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-81" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3c800;strokeColor=#B09500;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="2090" y="190" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-82" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;拉取target指标&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="2115" y="208.75" width="90" height="22.5" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-98" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;dashPattern=8 8;strokeWidth=2;" parent="1" source="fdpDCFg-NzPG3DscGwCP-83" target="fdpDCFg-NzPG3DscGwCP-81" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2160" y="380" />
+              <mxPoint x="2290" y="380" />
+              <mxPoint x="2290" y="170" />
+              <mxPoint x="2160" y="170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-83" value="&lt;div style=&quot;font-size: 16px;&quot;&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 16px;&quot;&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;存储指标&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="2080" y="280" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-99" value="&lt;article data-content=&quot;[{&amp;quot;type&amp;quot;:&amp;quot;block&amp;quot;,&amp;quot;id&amp;quot;:&amp;quot;wYMw-1721447536406&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;code&amp;quot;,&amp;quot;data&amp;quot;:{&amp;quot;language&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;theme&amp;quot;:&amp;quot;default&amp;quot;,&amp;quot;version&amp;quot;:1},&amp;quot;nodes&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;block&amp;quot;,&amp;quot;id&amp;quot;:&amp;quot;lbsN-1721454408444&amp;quot;,&amp;quot;name&amp;quot;:&amp;quot;code-line&amp;quot;,&amp;quot;data&amp;quot;:{},&amp;quot;nodes&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;text&amp;quot;,&amp;quot;id&amp;quot;:&amp;quot;d9yT-1721454408442&amp;quot;,&amp;quot;leaves&amp;quot;:[{&amp;quot;text&amp;quot;:&amp;quot;scrapeLoop&amp;quot;,&amp;quot;marks&amp;quot;:[]}]}]}],&amp;quot;state&amp;quot;:{}}]&quot;&gt;&lt;div data-language=&quot;&quot; style=&quot;white-space-collapse: preserve;&quot; data-theme=&quot;default&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;storage模块&lt;/font&gt;&lt;/div&gt;&lt;/article&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="2080" y="280" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="fdpDCFg-NzPG3DscGwCP-103" value="&lt;span style=&quot;white-space-collapse: preserve;&quot;&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt; 协程启动scrapeLoop.run&lt;/font&gt;&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="2070" y="130" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="XsaYZCnVBgNQdDiTwEfk-10" value="&lt;font color=&quot;#e6e6e6&quot;&gt;tyltr&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=1;" parent="1" vertex="1">
+          <mxGeometry x="1630" y="171.25" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="XsaYZCnVBgNQdDiTwEfk-11" value="&lt;font color=&quot;#e6e6e6&quot;&gt;tyltr&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=1;" parent="1" vertex="1">
+          <mxGeometry x="1867" y="321.25" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="XsaYZCnVBgNQdDiTwEfk-12" value="&lt;font color=&quot;#e6e6e6&quot;&gt;tyltr&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=1;" parent="1" vertex="1">
+          <mxGeometry x="1430" y="380" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="XsaYZCnVBgNQdDiTwEfk-15" value="&lt;font color=&quot;#e6e6e6&quot;&gt;tyltr&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=1;" parent="1" vertex="1">
+          <mxGeometry x="2070" y="360" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="qRgv9BsmHJP2Pb30_IeC-4" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;relabel&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="1664" y="240" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="qRgv9BsmHJP2Pb30_IeC-8" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;处理job的label与relabeling&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1480" y="270" width="170" height="81.25" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

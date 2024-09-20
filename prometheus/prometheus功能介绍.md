@@ -244,7 +244,7 @@ prometheus_rule_group_duration_seconds_count 0
 ./prometheus  --config.file=documentation/examples/prometheus.yml   --storage.tsdb.path=/home/tyltr/tsdb/data  --storage.tsdb.retention=7d
 ```
 
-`prometheus`本地存储有个很严重的缺点:机器磁盘空间有限，无法存储大量的监控数据。即便是`prometheus2.x` 提升了数据压缩率，但也不能从根本上解决**单节点存储的限制**.为了解决这个问题，`prometheus`提供了**远程读写**的接口，让用户选择合适的时序数据库来实现存储。
+`prometheus`本地存储有个很严重的缺点:`Prometheus`自带的`TSDB`是非集群化的数据库，只能存储在本地磁盘。然而机器磁盘空间有限，无法存储大量的监控数据。即便是`TSDB V3` 提升了数据压缩率，但也不能从根本上解决**单节点存储的限制**.为了解决这个问题，`prometheus`提供了**远程读写**的接口，让用户选择合适的时序数据库来实现存储。
 
 ### 远程存储
 
