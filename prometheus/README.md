@@ -26,15 +26,15 @@
 - Label和Relabeling
   - [Label和Relabeling使用](Label和Relabeling.md)
   - [Label和Relabeling代码解析](Label和Relabeling.md)
-- 存储模块
+- 存储模块解析
   - [存储模块简述](存储模块简述.md)
-- 时序数据库
+- TSDB
   - [时序数据](时序数据.md)
   - [时序数据库](时序数据库.md)
   - [tsdb V2说明](tsdbv2说明.md)
   - [tsdb V3原理概述](tsdbV3原理概述.md)
   - [tsdb v3源码解析](tsdbv3源码解析.md)
-- promql
+- PromQL
   - [promql基本语法](promql_syntactic.md)
   - [聚合操作符与函数](promql_aggregation_operators_functions.md)
   - [promql实践与应用](promql_practice.md)
@@ -43,10 +43,10 @@
   - [源码分析:promql函数实现](promql_function_implementation.md)
 - 规则
   - [规则(todo)](规则.md)
+- 告警服务发现
+  - todo
 - 告警
   - [告警(todo)](告警.md)
-- [指标类型结构(todo)](指标类型.md)
-- [代理模式(todo)](代理模式.md)
 
 
 # Alert Manager
