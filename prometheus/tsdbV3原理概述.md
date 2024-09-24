@@ -87,25 +87,16 @@ TODO -->
 
 `chunk`只能写入`120`个样本。**当`active chunk`满了**或者**当前`active chunk`已经持续了`chunkRange`了**，内存的`Head`会创建新的`chunk`来接收新数据样本(*即：新的`active chunk`*)。之前的`active chunk`数据会落盘到`chunks_head`目录。这样`prometheus`就可以根据需要，动态将此部分数据加载到内存了。
 
-
 `chunks_head`存储的时序时间跨度超过了`chunkRange / 2 * 3`(*注：默认3小时*)，就会将前`chunkRange`时间范围的时序数据压缩到`Block`中。
 
 <!-- 
-解读记录：
+https://github.com/prometheus/prometheus/blob/main/tsdb/head_append.go
+https://github.com/prometheus/prometheus/blob/main/tsdb/db.go https://github.com/prometheus/prometheus/blob/main/tsdb/head.go
+-->
 
-代码： https://github.com/prometheus/prometheus/blob/main/tsdb/head_append.go
-[tsdb/db.go](https://github.com/prometheus/prometheus/blob/main/tsdb/db.go)、
-[head](https://github.com/prometheus/prometheus/blob/main/tsdb/head.go)
 
-```go
-func (h *Head) compactable() bool {
-    if !h.initialized() {
-        return false
-    }
 
-    return h.MaxTime()-h.MinTime() > h.chunkRange.Load()/2*3
-}
-``` -->
+
 
 
 ## WAL
@@ -380,7 +371,6 @@ WAL重放时，各个数据类型怎么处理：
 我们以查询某个时序在`chunks_head`的数据为例。
 一种指标数据(*同一个`SeriesId`*)会分散到很多`chunks_head`的文件的`chunk`(*我们称之为`chunks_head chunk`*)中。在内存中，一直维护着一个`SeriesId`和`chunks_head chunk`的映射关系。`tsdb`可以根据这个映射关系获取到`chunks_head chunk`的引用。`chunks_head chunk`的引用是一个`64bit`的无符号整数:前32位表示文件号，例如`000001`、`000002`...;后32位表示文件内字节偏移`offsize`。
 例如一个`chunks_head chunk`的引用是`ref`:那么文件名为`ref >> 32`;`chunk`在文件中的位置 `(ref <<  32) >> 32`
-
 
 <!-- 
 https://github.com/prometheus/prometheus/blob/v2.53.0/tsdb/chunks/head_chunks.go#L84

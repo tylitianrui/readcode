@@ -2,7 +2,7 @@
 
 
 
-`prometheus` 服务器定时从`target`服务收集指标数据。
+`prometheus` 的指标数据由`target`服务提供的。`prometheus`服务器定时从`target`服务上收集这些指标。在开发` prometheus client`之前，先介绍一下指标。
 
 
 
@@ -36,7 +36,7 @@
 
 ### Counter(计数器类型)
 
-Counter(计数器类型): 一般用于累计值，**只增不减**，例如记录请求次数、任务完成数、错误发生次数。类比:人生吃饭、喝水的次数  
+Counter(计数器类型): 一般用于累计值，**只增不减**，例如记录请求次数、任务完成数、错误发生次数。类比: 人吃饭、喝水的次数  
 例如: 接口`/metrics`，状态码为`200`的请求次数
 
 ```text
@@ -44,12 +44,12 @@ Counter(计数器类型): 一般用于累计值，**只增不减**，例如记�
 ```
 
 展示：  
-![prometheus_http_requests_total](/Users/tyltr/opencode/readcode/prometheus/src/prometheus_http_requests_total.png "prometheus_http_requests_total")
+![prometheus_http_requests_total](./src/prometheus_http_requests_total.png "prometheus_http_requests_total")
 
 
 ### Gauge(仪表盘类型)
 
-Gauge(仪表盘类型): 一般的监控指标，波动的指标，**可增可减**，例如cpu使用率，可用内存。类比:每顿吃了几碗饭。 
+Gauge(仪表盘类型): 一般的监控指标，波动的指标，**可增可减**，例如cpu使用率，可用内存。类比:人每顿吃了几碗饭。 
 
 例如：`go`程序的内存分配情况  
 
@@ -60,14 +60,14 @@ go_memstats_alloc_bytes 2.1667616e+07
 ```
 
 展示  
- ![go_memstats_alloc_bytes](/Users/tyltr/opencode/readcode/prometheus/src/go_memstats_alloc_bytes.png "go_memstats_alloc_bytes")
+ ![go_memstats_alloc_bytes](./src/go_memstats_alloc_bytes.png "go_memstats_alloc_bytes")
 
 
-### c(直方图类型) 
+### Histogram(直方图类型) 
 
-Histogram(直方图类型):表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小），并能够对其**指定区间**以及总数进行统计，通常它采集的数据展示为直方图。格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是向上包含的*
+Histogram(直方图类型):表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小），并能够对其**指定区间**以及总数进行统计，通常它采集的数据展示为直方图。格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
 
-例如：
+**例如**：下例截取自`prometheus`的监控数据，此为`prometheus`调用`/metrics`接口的耗时。
 
 ```
 prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.1"} 727
@@ -80,14 +80,76 @@ prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="20"} 728
 prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="60"} 728
 prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="120"} 728
 prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="+Inf"} 728
+prometheus_http_request_duration_seconds_sum{handler="/metrics"} 58.465142
+prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 ```
 
-`prometheus`，调用`/metrics`接口的监控数据。`request_time <= 0.1s`的请求数 727，`request_time <= 0.4s`的请求数 728。  
+说明：`request_time <= 0.1s`的请求数 `727`，`request_time <= 0.4s`的请求数 `728`。  
+
+展示   
+
+![prometheus_http_request_duration_seconds_bucket](./src/prometheus_http_request_duration_seconds_bucket.png " prometheus_http_request_duration_seconds_bucket")
 
 
-展示：  
 
-![prometheus_http_request_duration_seconds_bucket](/Users/tyltr/opencode/readcode/prometheus/src/prometheus_http_request_duration_seconds_bucket.png " prometheus_http_request_duration_seconds_bucket")
+ #### `prometheus`的直方图与数学的直方图对比
+
+数学上经常通过直方图表述数据分布。例如：一个班级学生的成绩分布情况
+
+
+ ![学生的成绩分布情况](./src/math_histogram_core.drawio.png "学生的成绩分布情况")
+
+**说明**
+
+- 每个区间仅统计当前区间的数据量，例如`70~80`之间的有`19`人
+- 查询多个区间数据需要进行加法运算，例如计算小于`90`分的人数`5+16+19+13=53`
+- 下一次考试成绩的统计不涉及本次考试成绩
+
+
+
+`prometheus`中的直方图与数学的直方图进行了**优化**。上文中所提到的统计区间的数据会分组存储桶`bucket`，`prometheus`会称之为桶`bucket`。使用`prometheus`中的直方图展示本次考试成绩，如下图所示。
+
+
+
+
+ ![学生的成绩分布情况_prometheus呈现](./src/prometheus_histogram_core.drawio.png "学生的成绩分布情况_prometheus呈现")
+
+**说明**
+
+- 每个桶的值是**小于或等于**桶的上限的数据之和，例如本次考试`<= 60` 有`5`人，`60<成绩<=70`有`16`人，`70<成绩<=80`有`19`人；那么桶`60~70`部分就是`5+16=21` ,桶`70~80`部分就是`5+16+19=40`
+
+- 查询多个区间数据不再需要加法运算，例如计算小于`90`分的人数直接获取`53`
+
+- `prometheus`中的直方图是时间序列，时间序列本身是**累积**的。类比此例，就是本次考试成绩会计入下一次考试中。
+
+  - 本次考试`<= 60` 有`5`人，`60<成绩<=70`有`16`人，`70<成绩<=80`有`19`人；那么桶`60~70`部分就是`5+16=21` ,桶`70~80`部分就是`5+16+19=40`
+  - 下次考试`<= 60` 有`3`人，`60<成绩<=70`有`12`人，`70<成绩<=80`有`22`人；那么桶`60~70`部分就是`(3+12)+21=36` ,桶`70~80`部分就是`(3+12+22)+40=77`
+
+  
+
+#### 稀疏直方图
+
+TODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Summary(摘要类型)
 
@@ -106,7 +168,7 @@ go_gc_duration_seconds{quantile="1"} 0.001552459
 ```
 
 展示：  
-![go_gc_duration_seconds](/Users/tyltr/opencode/readcode/prometheus/src/go_gc_duration_seconds.png " go_gc_duration_seconds")
+![go_gc_duration_seconds](./src/go_gc_duration_seconds.png " go_gc_duration_seconds")
 
 
 
