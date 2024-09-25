@@ -5,7 +5,16 @@
 @createdAt = {{datetime iso8601}}
 @noCache = no-cache
 
+#%% code 400
 GET  /ping/test
 Host: {{host}}
 Content-Type: {{contentType}}
 Cache-Control: {{noCache}}
+
+
+#### code  200
+GET  /ping/123
+Host: {{host}}
+Content-Type: {{contentType}}
+Cache-Control: {{noCache}}
+
