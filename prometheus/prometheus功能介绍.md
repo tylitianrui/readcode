@@ -106,7 +106,7 @@ scrape_configs:
 #### 示例:为job_name进行标签改写
 
 基于[示例:为target打标签](#示例为target打标签),标签`instance`默认值是标签`__address__`的值，即两个`target`的`instance`标签分别是`localhost:9090`、`127.0.0.1:9090`；本次将标签`instance`值更改为`monitor` 
-  
+
 ```yaml
 global:
   scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
@@ -127,7 +127,7 @@ scrape_configs:
         replacement: 'monitor'
         target_label: instance
         action: replace  
-```  
+```
 
 **效果**： 
 
@@ -170,7 +170,7 @@ curl -X  GET '127.0.0.1:9090/metrics' \
 --header 'User-Agent: Prometheus/2.53.0' \
 --header 'Accept: application/openmetrics-text;version=1.0.0;q=0.5,application/openmetrics-text;version=0.0.1;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=2' \
 --header 'X-Prometheus-Scrape-Timeout-Seconds: 15'
-``` 
+```
 
 <br>
 可以获取如下数据(截取部分数据)
@@ -261,7 +261,7 @@ remote_write:
   - url: "http://remote-write-url"
 
 ```
-<br> 
+ 
 
 说明:  
 

@@ -42,7 +42,7 @@ prometheus server 主要的功能模块：
 
 `Scrape Manager`负责的工作：
 
-- 拉取target的监控指标
+- 拉取`targe`t的监控指标
 - 将获取到的指标样本发送个存储模块
 
 `Scrape Manager`通过`chan map[string][]*targetgroup.Group`获取到服务信息。`Scrape Manager`会存储这些地址。如果有新的`target`，`prometheus`就会为其开启新的`ScrapeLoop`,定期去拉取监控指标。如果存在失效的`target`，`prometheus`就停止他的`ScrapeLoop`，即不再拉取它的监控指标。  
@@ -53,58 +53,83 @@ prometheus server 主要的功能模块：
 ![targets对比](./src/targets对比.svg)
 
 
+
+
+
 ## 标签模块
 
 标签模块是嵌入在`Scrape`模块之中的，是在拉取之前制定的标签"计划"，按照此计划为获取的指标打标签或改写标签。执行阶段示意图：  
 
 ![执行阶段示意图](./src/label与relabel阶段.drawio.png)
 
+
+
 在代码中，是没有标签模块的。打标签和改写标签的相关代码分散在其他模块里的。例如初始化阶段，自定义的标签的规则就加载了。在服务发现模块，自定义标签就会随着`target`地址发送给`Scrape`模块。`Scrape`模块在拉取指标之前又会处理自定义的标签。 
 
-引申:
+
+
+> [!TIP]
+>
 > 上文可知，`服务发现模块`会将`target`地址信息封装成`targetgroup.Group`传递给`Scrape模块`。`targetgroup.Group`结构体的**公共标签**部分存放的就是自定义标签。
-> 
->    
->     type Group struct {
->        Targets []model.LabelSet  // targets的地址
->        Labels model.LabelSet     //公共标签，存放的自定义标签
-> 	     Source string
->       }
->  Labels字段就是公共标签，每个targets都可以获取到的标签，它存放的就是自定义标签。
+>
+> **`targetgroup.Group`定义**
+>
+> > ```golang
+> > type Group struct {
+> >      Targets []model.LabelSet  // targets的地址
+> >      Labels model.LabelSet     //公共标签，存放的自定义标签
+> > 	   Source string
+> >    }
+> > ```
+>
+> `Labels`字段就是公共标签，每个`targets`都可以获取到的标签，它存放的就是自定义标签。
 
-<br/>
 
-既然源码中不存在此模块，功能代码又分散。为什么解析此部分呢？  
-因为打标签和改写标签是`Prometheus`一项强大的功能。实际生产环境中，几乎每个`Prometheus`都会配置使用此功能。所以作者将其抽离出来，作为单独的模块进行讲解。
+
+既然源码中不存在此模块，功能代码又分散。为什么解析此部分呢？
+因为打标签和改写标签是`Prometheus`一项强大的功能。实际生产环境中，几乎每个`Prometheus`都会配置使用此功能。所以将其抽离出来，作为单独的模块进行讲解。
+
+
 
 
 ## 存储模块
 
-TODO
+`Prometheus`支持两种种存储方案：本地存储、远端存储。远端存储可以配置多种第三方的厂商的数据库。`Prometheus`就需要单独一个处理存储模块，来兼容本地存储、远端存储差异，屏蔽了底层不同存储的实现。
+
+源码中，`Fanout Storage`就是存储层的代理，无论是本地存储还是远端存储都有`Fanout Storage`作代理。如图
+
+
+
+![Fanout Storage代理](./src/Fanout_Storage.drawio.png)
+
+`Prometheus`使用本地存储时，`Fanout Storage`会把数据写入到`tsdb`中。
+
+`Prometheus`使用远端存储时，`Fanout Storage`不仅会把数据写入`tsdb`中，也会写入远端存储。`tsdb`会保留最近一段时间的数据，作为备份。一是为了防止网络等原因造成的写入远端不成功，造成的数据丢失；二是可以实现批量写入远端。
+
+`Prometheus`使用远端存储时，本地存储时最新的数据，已经成功同步到远端的数据是没必要保存的；而远端数据是相对旧一点的数据，最新的数据很可能还没同步到远端存储。在查询时，`Fanout Storage`需要聚合远端数据和本地存储的数据，返回给用户。
+
+
+
+
 
 
 ## `PromQL`模块
 
-TODO
-
-## Rule Manager
-
-TODO
+`PromQL`模块负责`PromQL`的解析和处理，`PromQL`模块实现了函数、关键字等功能。
 
 
-## 告警组件服务发现模块
-
-TODO
-
-## 告警模块
-
-TODO
 
 ## 规则模块
 
-TODO
+`Prometheus`的规则模块主要实现了有两个规则：
+
+- `Recording Rule` 记录规则，通过**预先计算经常需要的表达式**或**计算成本高昂的表达式**,将其结果保存为一组新的时间序列.来实现优化查询的目的
+- `Alert Rule` 告警规则，触发告警规则，`Prometheus`就会生成一个警报，发送给`Alertmanager`。
 
 
-## TSDB
 
-TODO
+## 告警组件服务发现模块和告警模块
+
+`Prometheus`不直接发生告警给用户，而是发送告警信息给`alertmanager`服务。`Alertmanager`服务会处理告警信息，并发送用户。`Alertmanager`服务可以是静态地址，直接配置在`Prometheus`配置文件即可。在云原生环境下，就需要服务发现动态地获取到`alertmanager`服务地址。这就告警组件服务发现模块去实现此功能。
+
+`Prometheus`需要预先配置告警规则。一旦触发到告警规则，`Prometheus`就会生成一个警报，发送给`Alertmanager`。`Alertmanager`地址由告警组件服务发现模块提供。
