@@ -1,4 +1,4 @@
-# 基于prometheus client监控应用
+# 开发基于prometheus client的target
 
 
 
@@ -65,7 +65,15 @@ go_memstats_alloc_bytes 2.1667616e+07
 
 ### Histogram(直方图类型) 
 
-Histogram(直方图类型):表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小），并能够对其**指定区间**以及总数进行统计，通常它采集的数据展示为直方图。格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
+Histogram(直方图类型):表示一段时间范围内对数据进行采样（*通常是请求持续时间或响应大小*），并能够对其**指定区间**以及**总数**进行统计，通常它采集的数据展示为直方图、柱状图。格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
+
+直方图指标由三个部分：
+
+- 测量次数，类型`Counter`，指标名称以`_count`结尾。
+- 所有测量值之和,类型`Counter`，指标名称以`_sum`结尾。
+- 一组直方图的桶，指标名称以`_bucket`结尾，标签包含`le`。
+
+
 
 **例如**：下例截取自`prometheus`的监控数据，此为`prometheus`调用`/metrics`接口的耗时。
 
@@ -129,46 +137,55 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
   
   
 
-#### 稀疏直方图
+#### 直方图的误差
 
-在实际工作中，很多场景得益于`prometheus`的直方图，例如计算服务响应 `P95`、`P99`；热力图等。但直方图也引入了一个问题：**估算精度不够**。上例开始成绩小于等于`60`分的有5人,统计一下成绩低于`6`分的人数。假设一下：如果准确统计，只能把统计区间划分为`分数 <=6`、`6< 成绩 <= 60` 、`60 < 成绩 <= 70`......；如果用户需要再统计成绩低于`10.956`分、`14`分...呢？这样拆分下去的话，直方图的区间(`bucket`)就会越来越多，指标数量将会爆炸性的膨胀。显而易见，无论是业务上、还是技术上不断地拆分区间是不可取的。
+在实际工作中`prometheus`指标数据是定期采集的，在时间上都是离散的；样本数据也是划分区间的，例如直方图统计小于等于某值的数量和，而不是把所有的数据枚举值都记录下来。所以`prometheus`根据采集的数据会估算其他时刻或者其他数据的状态。虽然是估算，但**误差**必须足够小。
 
-因此，`Prometheus` 引入了` Histogram`的新方案: 稀疏直方图( `Sparse Histogram`)。
-
-
-
-TODO
-
-
-
-
-
-
-
-
-
-
+如果要求误差为`5%`，统计响应时间为`50ms`的请求数量，允许误差为`2.5ms`，即可以接受响应时间为`50ms ± 2.5ms`的请求；统计响应时间为`100ms`的请求数量，允许误差为`5ms`，即可以接受响应时间为`100ms ± 5ms`的请求；统计响应时间为`500ms`的请求数量，允许误差为`25ms`，即可以接受响应时间为`500ms ± 25ms`的请求。虽然误差为`5%`，但是统计的对象的值(`50ms`、`100ms`、`500ms`)增大，误差的绝对值也会越大(`2.5ms`、`5ms`、`25ms`)。因此，**区间不能等距划分**。统计小数据的指标时，区间跨度也要小一些；统计大数据的指标时，区间跨度要大一些。
 
 
 
 ### Summary(摘要类型)
 
-Summary(摘要类型):表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小)。格式`xxxx{quantile="< φ>"[,其他标签]} <数值>`，*注：`quantile`百分比*。
+`Summary`(摘要类型):表示一段时间范围内对数据进行采样（*通常是请求持续时间或响应大小*)，并能够对其**指定比例**以及**总数**进行统计。格式`xxxx{quantile="<φ>"[,其他标签]} <数值>`，`quantile`百分比，即**分位数**
+
+`Summary`指标由三个部分：
+
+- 观测对象发生的次数，类型`Counter`，指标名称以`_count`结尾。
+- 所有测量值之和,类型`Counter`，指标名称以`_sum`结尾。
+- 一组**分位数**数据，指标标签包含`quantile`，即：中位数(`quantile="0.5"`)、`9`分位(`quantile="0.9"`)
+
+> 注：分位数，指将一个随机变量的概率分布范围分为几个等份的数值点。
+>
+> 例如,下面一组数据 2,  5,  67, 102, 487, 1200,  9032，中位数(`quantile="0.5"`)为102 
+
 例如：
 
-```
+```text
 # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
 # TYPE go_gc_duration_seconds summary
-
-go_gc_duration_seconds{quantile="0"} 0.000024251
-go_gc_duration_seconds{quantile="0.25"} 0.0003065
-go_gc_duration_seconds{quantile="0.5"} 0.000597208
-go_gc_duration_seconds{quantile="0.75"} 0. 000893082
-go_gc_duration_seconds{quantile="1"} 0.001552459
+go_gc_duration_seconds{quantile="0"} 2.4291e-05
+go_gc_duration_seconds{quantile="0.25"} 3.75e-05
+go_gc_duration_seconds{quantile="0.5"} 0.000167125
+go_gc_duration_seconds{quantile="0.75"} 0.000247333
+go_gc_duration_seconds{quantile="1"} 0.000343667
+go_gc_duration_seconds_sum 0.001557791
+go_gc_duration_seconds_count 10
 ```
 
-展示：  
+说明
+
+- `go`语言`gc`进行了`10`次，总耗时` 0.001557791s`
+- 中位数(`quantile="0.5"`)耗时`0.000167125s`; `7.5`位数(`quantile="0.75"`)耗时`0.000247333s`
+
+
+
+展示  
 ![go_gc_duration_seconds](./src/go_gc_duration_seconds.png " go_gc_duration_seconds")
 
 
+
+
+
+## 开发
 

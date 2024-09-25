@@ -12,7 +12,7 @@
   - [prometheus功能介绍](prometheus功能介绍.md)
   - [prometheus server模块介绍](prometheus_server模块.md)
   - [prometheus server启动-main函数分析](prometheus_server启动.md)
-  - [基于prometheus client监控应用](基于prometheus_client监控应用.md)
+  - [开发基于prometheus client的target](开发基于prometheus_client的target.md)
 - 服务发现
   - [服务发现简述](discovery简述.md)
   - [prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
