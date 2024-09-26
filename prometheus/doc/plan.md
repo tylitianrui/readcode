@@ -1,5 +1,5 @@
 
-# prometheus 代码分析
+# prometheus 源码分析
 -  [x] 环境准备
 -  [x] Prometheus简介
    -  [x] Prometheus架构
