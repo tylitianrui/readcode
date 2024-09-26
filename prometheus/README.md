@@ -1,5 +1,7 @@
 # prometheus
 
+电子版：[https://github.com/tylitianrui/readcode](https://github.com/tylitianrui/readcode)
+
 ## 目录
 
 - 项目简述与准备
