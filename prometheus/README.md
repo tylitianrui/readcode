@@ -1,6 +1,24 @@
-# prometheus
+# prometheus源码解析
 
-电子版：[https://github.com/tylitianrui/readcode](https://github.com/tylitianrui/readcode)
+## 前言
+
+github：[https://github.com/tylitianrui/readcode](https://github.com/tylitianrui/readcode)
+
+版本：`2.53.0`
+
+内容：
+
+- prometheus的基本使用、配置
+- prometheus原理、数学模型
+- prometheus源码解析以及二开
+
+
+
+为什么选择版本2.53.0？
+
+最新的lts版本
+
+
 
 ## 目录
 
@@ -18,11 +36,12 @@
   - [开发基于prometheus client的target](开发基于prometheus_client的target.md)
   
 - 服务发现
-  - [服务发现简述](discovery简述.md)
-  - [prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
+  - [服务发现简述与基本配置](discovery简述.md)
   - [prometheus服务发现的核心逻辑](discovery_core_logic.md)
   - [prometheus服务发现的实现](discovery_core_implementation.md)
+  - [Debug:prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
   - [kubernetes协议的服务发现](discovery_k8s_implementation.md)
+  - [kubernetes部署prometheus](prometheus_k8s_deploy.md)
   - [新版本DiscoveryManager](discovery_新版本DiscoveryManager.md)
   
 - scrape
