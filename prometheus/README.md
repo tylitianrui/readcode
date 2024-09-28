@@ -8,15 +8,17 @@ github：[https://github.com/tylitianrui/readcode](https://github.com/tylitianru
 
 内容：
 
-- prometheus的基本使用、配置
+- prometheus的配置、部署、使用
+
 - prometheus原理、数学模型
+
 - prometheus源码解析以及二开
 
+  
 
+为什么选择版本`2.53.0`？
 
-为什么选择版本2.53.0？
-
-最新的lts版本
+最新的LTS版本 , 详见官方文档 [https://prometheus.io/docs/introduction/release-cycle/#long-term-support](https://prometheus.io/docs/introduction/release-cycle/#long-term-support)
 
 
 
@@ -81,7 +83,7 @@ github：[https://github.com/tylitianrui/readcode](https://github.com/tylitianru
   
 - 番外篇
   - [四种指标类型源码解析](./metric_types.md)
-  - Promethues 3.x的特性
+  - [Promethues 3.x的特性](./prometheus_v3_new_features.md)
   - [VictoriaMetrics介绍](./VictoriaMetrics.md)
   - [Telegraf介绍](./Telegraf.md)
   - 
