@@ -7,9 +7,9 @@
 一般情况，`prometheus`以 "`__`"作为前缀的标签的是系统内置标签,定义了`Prometheus`的`Target`实例和指标的一些基本信息。
 常见内部标签如下：
 
-- `__address__`   当前`Target`实例的访问地址<`host`>:<`port`>，只供`Prometheus`使用，不会写入时序数据库中，也无法使用`promql`查询。
-- `__scheme__`    采集`Target`指标的协议，`HTTP`或者`HTTPS` 默认是`HTTP`，只供`Prometheus`使用，不会写入时序数据库中，也无法使用`promql`查询。
-- `__metrics_path__`  `Target`对外暴露的采集接口，默认`/metrics`，只供`Prometheus`使用，不会写入时序数据库中，也无法使用`promql`查询。
+- `__address__`   当前`Target`实例的访问地址<`host`>:<`port`>，只供`Prometheus`执行期间使用，不会写入时序数据库中，也无法使用`promql`查询。
+- `__scheme__`    采集`Target`指标的协议，`HTTP`或者`HTTPS` 默认是`HTTP`，只供`Prometheus`执行期间使用，不会写入时序数据库中，也无法使用`promql`查询。
+- `__metrics_path__`  `Target`对外暴露的采集接口，默认`/metrics`，只供`Prometheus`执行期间使用，不会写入时序数据库中，也无法使用`promql`查询。
 - `__name__`      `metrics`的名称，指标名会以 `__name__= <metric_name>`的形式，存储在时序数据库中，例如`__name__ = prometheus_http_requests_total`
 - `job`   指标归属哪个 `job`
 - `instance`   采集的实例，默认情况与`__address__`相同
@@ -116,22 +116,20 @@ scrape_configs:
 - `replacement`通过分组替换后标签（`target_label`）对应的值。默认是`$1`
 - 具体处理的行为,即`action`，即如果`source_labels`指标满足`regex`规则，那么`prometheus`会进行“特定的处理”，将处理结果赋值给`target_label`。具体有哪些行为呢？ 如下表所示：  
 
-<br>
-
 | action    | 说明                                                         |
 | :-------- | :----------------------------------------------------------- |
 | replace   | 根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签。如果未指定`action`，则默认就是`replace` |
 | keep      | 根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集 |
 | drop      | 根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与`keep`相反 |
-| labelkeep | 使用`regex`表达式匹配标签，仅收集符合规则的`target`，不符合匹配规则的不收集 |
-| labeldrop | 使用`regex`表达式匹配标签，符合规则的标签将从`target`实例中移除 |
-| labelmap  | 根据`regex`的定义去匹配`Target`实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值 |
+| labelkeep | 使用`regex`表达式匹配标签，仅仅保留匹配成功的标签            |
+| labeldrop | 使用`regex`表达式匹配标签，仅仅移除匹配成功的标签,用于排除，与`labelkeep`相反 |
+| labelmap  | 根据`regex`的定义去匹配`Target`实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值。用于标签复制 |
 
 
 
 #### Relabeling - replace 标签替换
 
-####  案例3: replace基本使用,作用范围是job
+#####  案例3: replace基本使用,作用范围是job
 
 在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将标签`service` 的值改下成`prometheus_monitor`。配置如下 
 
@@ -180,11 +178,7 @@ scrape_configs:
 
 
 
-
-
-
-
-#### 案例4: 使用replace新增自定义标签
+##### 案例4: 使用replace新增自定义标签
 
 在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将内置标签`__address__` 的`ip`地址部分改写成自定义标签`node`,并存入数据库。配置如下 
 
@@ -232,7 +226,7 @@ scrape_configs:
 
 ![使用replace新增自定义标签](./src/relabel_replace_from_address_to_node_2.png)
 
-#### 案例5: 慎用！！！replace改写内部标签
+##### 案例5: 慎用！！！replace改写内部标签
 
 在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将内置标签`__address__` 的值改写成`biz`标签的值。配置如下 
 
@@ -330,12 +324,175 @@ scrape_configs:
 
 #### Relabeling - keep与drop
 
-TODO
+##### 案例6：采集特定的target的指标
+
+在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，仅仅采集`__address__`为`127.0.0.1:9090`的`target`的指标
+
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+    - source_labels:
+      - "__address__"
+      regex: "127.0.0.1:9090"
+      action: keep
+      # action: drop   # 仅不采集__address__ =127.0.0.1:9090的 target
+``````
+
+说明：
+
+- 仅采集`__address__= 127.0.0.1:9090`的target
+
+如图所示
+
+![keep使用](./src/relabel_keep_1.png)
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
+
+![keep使用](./src/relabel_keep_2.png)
+
+
+
+若上例需求改为【在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，不采集`__address__`为`127.0.0.1:9090`的`target`的指标】，则使用`drop`。`drop`与`keep`的作用相反。配置则为
+
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+    - source_labels:
+      - "__address__"
+      regex: "127.0.0.1:9090"
+      action: drop
+``````
+
+
+
+
 
 #### Relabeling - labelkeep和labeldrop
 
-TODO
+##### 案例7：仅保留指标的部分标签
+
+在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，仅保留指标的`__xxxx__`形式的标签和`biz` 标签。配置如下：
+
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+      - regex: "__(.*)__|biz"
+        action: labelkeep
+``````
+
+
+
+如图所示
+
+![labelkeep使用](./src/relabel_labelkeep_1.png)
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
+
+![labelkeep使用](./src/relabel_labelkeep_2.png)
+
+有些伙伴可能已经心细地发现了一个问题：为何没有`__xxxx__`形式的标签，而凭空出现一个`instance`标签呢？
+
+首先，本例子中`__xxxx__`形式的标签(*即：`__address__` 、`__metrics_path__` 、`__schama__` 、`__scrape_interval__` 、`__scrape_timeout__`* )都是内置标签。内置标签只供`Prometheus`执行的中间过程使用，不会写入时序数据库中，也无法使用`promql`查询。这些内置标签最终不会出现在指标数据上
+
+再者，如果用户没有在`relabel_configs`中配置  `instance`标签，那么`Prometheus`自动创建此标签。`instance`标签的默认值就是`__address__` 的值。
+
+
+
+> [!WARNING]
+>
+> 如果案例7中正则匹配部分改为`regex: "biz"`即：仅保留`biz`标签，不保留`__xxxx__`形式的标签，结果会怎样呢？
+>
+> 结果会报错`Creating target failed" err="instance 0 in group 0: no address`。因为`__address__`是`Prometheus`拉取指标的地址。如果`__address__`被移除了，那么`Prometheus`将无法获取`target`的地址。所以会报错。
+>
+> 
+>
+> 在实际生产中，尽量不要处理`__xxxx__`形式的内置标签！！！
+
+
 
 #### Relabeling - labelmap
 
-TODO
+##### 案例8：复制标签
+
+在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，复制内置标签到指标上，并且把 `__xxxx__`形式改为`xxxx`形式。配置如下：
+
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+      - regex: "__(.*)__"
+        action: labelmap
+``````
+
+说明： 原本内置标签不会写入时序数据库中。本次将其拷贝到了指标数据中，并存储数据库中。
+
+如图所示
+
+![labelmap使用](./src/relabel_labelmap_1.png)
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
+
+![labelmap使用](./src/relabel_labelmap_2.png)
