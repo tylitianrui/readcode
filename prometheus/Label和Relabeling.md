@@ -5,14 +5,20 @@
 ### 内置标签/Meta标签
 
 一般情况，`prometheus`以 "`__`"作为前缀的标签的是系统内置标签,定义了`Prometheus`的`Target`实例和指标的一些基本信息。
-内置标签[定义在common项目里](https://github.com/prometheus/common/blob/main/model/labels.go#L42)，常见内部标签如下：
+常见内部标签如下：
 
 - `__address__`   当前`Target`实例的访问地址<`host`>:<`port`>，只供`Prometheus`使用，不会写入时序数据库中，也无法使用`promql`查询。
 - `__scheme__`    采集`Target`指标的协议，`HTTP`或者`HTTPS` 默认是`HTTP`，只供`Prometheus`使用，不会写入时序数据库中，也无法使用`promql`查询。
 - `__metrics_path__`  `Target`对外暴露的采集接口，默认`/metrics`，只供`Prometheus`使用，不会写入时序数据库中，也无法使用`promql`查询。
-- `__name__`      `metrics`的名称，指标名会以 `__name__=<metric_name>`的形式，存储在时序数据库中，例如`__name__=prometheus_http_requests_total`
+- `__name__`      `metrics`的名称，指标名会以 `__name__= <metric_name>`的形式，存储在时序数据库中，例如`__name__ = prometheus_http_requests_total`
 - `job`   指标归属哪个 `job`
 - `instance`   采集的实例，默认情况与`__address__`相同
+
+
+
+> [!NOTE]
+>
+> 内置标签没有定义在`prometheus`项目，定义在`prometheus` 的公共依赖项目 [common](https://github.com/prometheus/common/blob/main/model/labels.go#L42)
 
 
 
@@ -23,7 +29,8 @@
 #### 案例1:基本使用
 
 要求： 针对当前`prometheus`得监控，为其指标标注归属部门`infra`、服务类型`monitor`、运行环境`prod`等  
-<br> 
+
+
 配置如下： 
 
 ```yaml
@@ -42,18 +49,18 @@ scrape_configs:
 ```
 
 展示效果：  
-<br>
+
 首先，我们先看一下`target`上有哪些`label`,访问[http://127.0.0.1:9090/targets?search=](http://127.0.0.1:9090/targets?search=)  如图：  
 
 ![prometheus_label_demo_1_target](./src/prometheus_label_demo_1_target.png)
 
 <br>
 
-我们再看一下指标，**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示  
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示  
 
-![prometheus_label_demo_1](./src/prometheus_label_demo_1.png)
+![prometheus_label_demo_1](./src/prometheus_label_demo_1.png) 可见所有指标都被打上这些`env: prod`、`service: monitor`、`biz: infra`标签  
 
-可见所有指标都被打上这些`env: prod`、`service: monitor`、`biz: infra`标签  
+
 
 
 #### 案例2: 作用范围是target，而不是job
@@ -87,8 +94,10 @@ scrape_configs:
 首先，我们先看一下`target`上有哪些`label`,访问[http://127.0.0.1:9090/targets?search=](http://127.0.0.1:9090/targets?search=), 如图:  
 
 ![prometheus_label_demo_2_target](./src/prometheus_label_demo_2_target.png)
-<br>
-我们再看一下指标，**可任选指标**，本次选取`go_gc_cycles_total_gc_cycles_total`展示 , 如图:  
+
+
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
 ![prometheus_label_demo_2](./src/prometheus_label_demo_2.png)
 
 
@@ -100,7 +109,7 @@ scrape_configs:
 
 ### 基本使用
 
-`Relabeling` 需要配置在prometheus的配置文件中(*例如：`prometheus.yaml`*)。与服务发现配置为同一层级的`relabel_configs`模块下进行配置。
+`Relabeling` 需要配置在`prometheus`的配置文件中(*例如：`prometheus.yaml`*)。与服务发现配置为同一层级的`relabel_configs`模块下进行配置。
 配置的关键字：
 
 - `source_labels` 源标签，没有经过`relabel`处理之前的标签名字。
@@ -120,6 +129,7 @@ scrape_configs:
 |labelkeep|使用`regex`表达式匹配标签，仅收集符合规则的`target`，不符合匹配规则的不收集|
 |labeldrop	|使用`regex`表达式匹配标签，符合规则的标签将从`target`实例中移除|
 |labelmap	 | 根据`regex`的定义去匹配`Target`实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|
+
 
 
 #### Relabeling - replace 标签替换

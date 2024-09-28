@@ -1,4 +1,4 @@
-# prometheus监控kubernetes配置
+# DEBUG:prometheus监控kubernetes配置
 
 静态配置不再赘述，可见[prometheus简述:静态文件配置](./prometheus简述.md#静态文件配置)
 

@@ -41,7 +41,7 @@ github：[https://github.com/tylitianrui/readcode](https://github.com/tylitianru
   - [服务发现简述与基本配置](discovery简述.md)
   - [prometheus服务发现的核心逻辑](discovery_core_logic.md)
   - [prometheus服务发现的实现](discovery_core_implementation.md)
-  - [Debug:prometheus监控外部kubernetes集群配置](discovery_k8s_config.md)
+  - [Debug:prometheus监控外部kubernetes集群配置](discovery_k8s_config_debug.md)
   - [kubernetes协议的服务发现](discovery_k8s_implementation.md)
   - [kubernetes部署prometheus](prometheus_k8s_deploy.md)
   - [新版本DiscoveryManager](discovery_新版本DiscoveryManager.md)
