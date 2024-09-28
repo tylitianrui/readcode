@@ -30,7 +30,6 @@
 
 要求： 针对当前`prometheus`得监控，为其指标标注归属部门`infra`、服务类型`monitor`、运行环境`prod`等  
 
-
 配置如下： 
 
 ```yaml
@@ -59,7 +58,6 @@ scrape_configs:
 我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示  
 
 ![prometheus_label_demo_1](./src/prometheus_label_demo_1.png) 可见所有指标都被打上这些`env: prod`、`service: monitor`、`biz: infra`标签  
-
 
 
 
@@ -100,7 +98,6 @@ scrape_configs:
 我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
 ![prometheus_label_demo_2](./src/prometheus_label_demo_2.png)
 
-
 可见：两个target获取的指标被打上不同的标签。**`labels`只作用于当前的`target`**
 
 ## Relabeling
@@ -121,20 +118,123 @@ scrape_configs:
 
 <br>
 
-| action | 说明    |
-| :-----| :---- | 
-|replace |根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签。如果未指定`action`，则默认就是`replace`| 
-|keep    |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集| 
-|drop	   |根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与`keep`相反|
-|labelkeep|使用`regex`表达式匹配标签，仅收集符合规则的`target`，不符合匹配规则的不收集|
-|labeldrop	|使用`regex`表达式匹配标签，符合规则的标签将从`target`实例中移除|
-|labelmap	 | 根据`regex`的定义去匹配`Target`实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值|
+| action    | 说明                                                         |
+| :-------- | :----------------------------------------------------------- |
+| replace   | 根据`regex`来去匹配`source_labels`标签上的值，并将改写到`target_label`中标签。如果未指定`action`，则默认就是`replace` |
+| keep      | 根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则采集此`target`,否则不采集 |
+| drop      | 根据`regex`来去匹配`source_labels`标签上的值，如果匹配成功，则不采集此`target`,用于排除，与`keep`相反 |
+| labelkeep | 使用`regex`表达式匹配标签，仅收集符合规则的`target`，不符合匹配规则的不收集 |
+| labeldrop | 使用`regex`表达式匹配标签，符合规则的标签将从`target`实例中移除 |
+| labelmap  | 根据`regex`的定义去匹配`Target`实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值 |
 
 
 
 #### Relabeling - replace 标签替换
 
+####  案例3: replace基本使用
+
+在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将标签`service` 的值改下成`prometheus_monitor`。配置如下 
+
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+    - source_labels:
+      - "service"
+      target_label: "service"
+      action: replace
+      replacement: prometheus_monitor
+``````
+
+
+
+说明： 要处理的源标签(*配置`source_labels`*)`service`。如果标签`service`的值匹配正则`(.*)`,那么将配置`replacement`的值(*此例子中为常量`prometheus_monitor`*) 赋值给目标标签(*配置`target_label`*) ` service`。
+
+展示
+
+![replace基本使用](./src/relabel_replace_from_service_to_service_1.png)
+
+
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
+
+![replace基本使用](./src/relabel_replace_from_service_to_service_2.png)
+
+
+
+#### 案例4: 使用replace新增自定义标签
+
+在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将内置标签`__address__` 的`ip`地址部分改写成自定义标签`node`,并存入数据库。配置如下 
+
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+    - source_labels:
+      - "__address__"
+      regex: "(.*):(.*)"
+      target_label: "node"
+      action: replace
+      replacement: $1
+``````
+
+
+
+说明：
+
+- 内置标签 `__address__`  只供`Prometheus`内部使用，不会写入时序数据库中，也无法使用`promql`查询。
+- 如果源标签 `__address__`的值匹配正则匹配`(.*):(.*)`,那么将`$1`位置上的值(*即:`ip`*部分) 赋值给自定义标签`node`；如果源标签 `__address__`的值不能匹配正则匹配`(.*):(.*)`,不进行赋值
+
+
+
+展示
+
+![使用replace新增自定义标签](./src/relabel_replace_from_address_to_node_1.png)
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
+
+![使用replace新增自定义标签](./src/relabel_replace_from_address_to_node_2.png)
+
+#### 案例5: 慎用 replace改写内部标签
+
+在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将内置标签`__address__` 的值改写成`biz`标签的值。配置如下 
+
 TODO
+
+
+
+
+
 
 
 #### Relabeling - keep与drop
