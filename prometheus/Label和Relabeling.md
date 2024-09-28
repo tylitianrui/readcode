@@ -131,7 +131,7 @@ scrape_configs:
 
 #### Relabeling - replace 标签替换
 
-####  案例3: replace基本使用
+####  案例3: replace基本使用,作用范围是job
 
 在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将标签`service` 的值改下成`prometheus_monitor`。配置如下 
 
@@ -163,7 +163,10 @@ scrape_configs:
 
 
 
-说明： 要处理的源标签(*配置`source_labels`*)`service`。如果标签`service`的值匹配正则`(.*)`,那么将配置`replacement`的值(*此例子中为常量`prometheus_monitor`*) 赋值给目标标签(*配置`target_label`*) ` service`。
+说明： 
+
+- 要处理的源标签(*配置`source_labels`*)`service`。如果标签`service`的值匹配正则`(.*)`,那么将配置`replacement`的值(*此例子中为常量`prometheus_monitor`*) 赋值给目标标签(*配置`target_label`*) ` service`。
+- `Relabeling`规则的作用范围是`job`。上例中`relabel_configs`配置对` job_name：prometheus`下的所有`target`都生效。
 
 展示
 
@@ -174,6 +177,10 @@ scrape_configs:
 我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:  
 
 ![replace基本使用](./src/relabel_replace_from_service_to_service_2.png)
+
+
+
+
 
 
 
@@ -225,15 +232,99 @@ scrape_configs:
 
 ![使用replace新增自定义标签](./src/relabel_replace_from_address_to_node_2.png)
 
-#### 案例5: 慎用 replace改写内部标签
+#### 案例5: 慎用！！！replace改写内部标签
 
 在[案例2: 作用范围是target，而不是job](#案例2: 作用范围是target，而不是job)的基础上，将内置标签`__address__` 的值改写成`biz`标签的值。配置如下 
 
-TODO
+``````yaml
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+    - source_labels:
+      - "biz"
+      regex: "(.*)"
+      # target_label: "address"  
+      target_label: "__address__"
+      action: replace
+      replacement: $1
+``````
 
 
 
+经过验证：修改了内置标签`__address__`之后，`prometheus`是无法采集`target`指标的。原因是内置标签是`prometheus`内部使用的，例如：`__address__`记录的是`target`的地址。在采集之前将`__address__`进行了修改，无法获取到真实的地址。
 
+上面的解释是根本原因是【无法获取到真实的地址】导致的。那么虽然改写`__address__`，但是如果是正确的值,是否可以正常采集呢？答案是肯定的。我们进行如下验证。
+
+- 我们使用`ifconfig`看一下本机的ip地址。本机ip为`192.168.0.105`
+
+``````shell
+en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+        options=400<CHANNEL_IO>
+        ether 88:e9:fe:79:b0:d1 
+        inet6 fe80::cca:ed6f:1ebf:92a1%en0 prefixlen 64 secured scopeid 0x4 
+        inet 192.168.0.105 netmask 0xffffff00 broadcast 192.168.0.255
+        nd6 options=201<PERFORMNUD,DAD>
+        media: autoselect
+        status: active
+``````
+
+- 将把`__address__`改写成`192.168.0.105`。 配置如下：
+
+``````
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: infra  
+      - targets: ["127.0.0.1:9090"]
+        labels:
+           env: prod
+           service: monitor
+           biz: internal
+    relabel_configs:
+    - source_labels:
+      target_label: "__address__"
+      action: replace
+      replacement: "192.168.0.105:9090"
+``````
+
+
+
+说明：
+
+- 运行正常。两个target的采集地址都是 `192.168.0.105:9090`
+
+如图所示
+
+![使用replace改写内置标签](./src/relabel_replace_address_1.png)
+
+
+
+我们再看一下指标，**可任选指标**，本次选取`go_memstats_heap_alloc_bytes`展示 , 如图:
+
+![使用replace改写内置标签](./src/relabel_replace_address_2.png)
 
 
 
