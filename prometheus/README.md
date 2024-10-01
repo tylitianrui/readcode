@@ -1,26 +1,5 @@
 # prometheus源码解析
 
-## 前言
-
-github：[https://github.com/tylitianrui/readcode](https://github.com/tylitianrui/readcode)
-
-版本：`2.53.0`
-
-内容：
-
-- prometheus的配置、部署、使用
-
-- prometheus原理、数学模型
-
-- prometheus源码解析以及二开
-
-  
-
-为什么选择版本`2.53.0`？
-
-最新的LTS版本 , 详见官方文档 [https://prometheus.io/docs/introduction/release-cycle/#long-term-support](https://prometheus.io/docs/introduction/release-cycle/#long-term-support)
-
-
 
 ## 目录
 
