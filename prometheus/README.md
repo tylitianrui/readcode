@@ -52,7 +52,9 @@
   - [源码分析:promql函数实现](promql_function_implementation.md)
   
 - 规则
-  - [规则(todo)](规则.md)
+  - [规则的配置](rule_config.md)
+  - [record rule代码解析](rule_code_record_rule.md)
+  - [alert rule代码解析](rule_code_alert_rule.md)
   
 - 告警服务发现
   - todo

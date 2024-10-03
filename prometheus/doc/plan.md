@@ -22,7 +22,7 @@
    -  [x] 数据采集scrape模块说明
    -  [ ] scrape模块源码分析
 -  [ ] Label和Relabeling
-   -  [ ] Label和Relabeling使用
+   -  [x] Label和Relabeling使用
    -  [ ] Label和Relabeling源码分析
 -  [ ] 存储模块解析
    -  [ ] 存储模块说明
