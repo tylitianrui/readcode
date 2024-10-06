@@ -1,5 +1,6 @@
 @hostname = 127.0.0.1
-@port = 8520
+# @port = 8520
+@port = 8521
 @host = {{hostname}}:{{port}}
 @contentType = application/json
 @createdAt = {{datetime iso8601}}
@@ -13,7 +14,7 @@ Cache-Control: {{noCache}}
 
 
 #### code  200
-GET  /ping/123
+GET  /ping/tyltr
 Host: {{host}}
 Content-Type: {{contentType}}
 Cache-Control: {{noCache}}

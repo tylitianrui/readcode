@@ -13,6 +13,14 @@ import (
 	"github.com/shirou/gopsutil/load"
 )
 
+const (
+	// HttpApiServerPort = 8520
+	// MetricsPort       = 9100
+
+	HttpApiServerPort = 8521
+	MetricsPort       = 9101
+)
+
 var (
 	//HTTP请求总数
 	requestTotal = prometheus.NewCounterVec(
@@ -53,7 +61,7 @@ func RunPrometheusMetricsApi() {
 		promhttp.Handler().ServeHTTP(w, r)
 	})
 	// http://127.0.0.1:9100/metrics
-	http.ListenAndServe(":9100", nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", MetricsPort), nil)
 }
 
 // 模拟业务处理延迟
@@ -102,7 +110,7 @@ func RunHttpApiServer() error {
 			"id": id,
 		})
 	})
-	return app.Run(":8520")
+	return app.Run(fmt.Sprintf(":%d", HttpApiServerPort))
 }
 
 // 获取系统负载
