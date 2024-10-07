@@ -3,7 +3,7 @@
 
 ## 目录
 
-- 项目简述与准备
+- 项目简述与准备工作
   - [代码版本](项目简述与准备.md#代码版本)
   - [阅读环境](项目简述与准备.md#阅读环境)
   - [手动编译安装与运行](项目简述与准备.md#下载代码)
@@ -43,7 +43,7 @@
   - [tsdb V3原理概述](tsdbV3原理概述.md)
   - [tsdb v3源码解析](tsdbv3源码解析.md)
   
-- PromQL
+- 查询 PromQL
   - [promql基本语法](promql_syntactic.md)
   - [聚合操作符与函数](promql_aggregation_operators_functions.md)
   - [promql实践与应用](promql_practice.md)

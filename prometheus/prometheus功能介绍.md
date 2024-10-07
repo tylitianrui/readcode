@@ -261,7 +261,7 @@ remote_write:
   - url: "http://remote-write-url"
 
 ```
- 
+
 
 说明:  
 
