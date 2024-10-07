@@ -11,7 +11,7 @@
 
 ## scrape模块核心逻辑
 
-![scrape模块执核心逻辑](./src/scape流程.svg)
+<img src="./src/scape流程.svg" alt="scrape模块执核心逻辑" style="zoom:200%;" />
 
 
 ### 更新和管理target
