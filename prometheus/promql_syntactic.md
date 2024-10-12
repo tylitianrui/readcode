@@ -91,7 +91,33 @@ Range vector literals work like instant vector literals, except that they select
 
 ```
 prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
-```  
+```
+
+
+
+#### offset  时间位移操作
+
+上文无论时间向量查询还是范围向量的查询都是基于当前时间点的。 `prometheus_http_requests_total{handler="/metrics"}` 表示最新的一次采集样本的数据；`prometheus_http_requests_total{handler="/metrics"}[30s]`表示最近`30s`内的所有采样数据。示意图如下：如果**当前**时间是`00:01:05` ，查询 `prometheus_http_requests_total{handler="/metrics"}`  返回的是`采样F`;查询`prometheus_http_requests_total{handler="/metrics"}[30s]`返回的数据列表是`采样D`、`采样F`。
+
+
+
+<img src="./src/offset_before.png" width="90%" height="50%" alt="offset默认">
+
+
+
+
+
+这是时间是基于当前时间的。如果我们想基于一个过去时间去查询指标呢？例如基于`15s`之前的数据。这时候就需要 时间位移操作`offset`了。
+
+用法 `offset <时间间隔>`   
+
+我们看一下 `prometheus_http_requests_total{handler="/metrics"} offset 15s`  这个查询语句。如果**当前**时间是`00:01:05` ，那么`offset 15s`  表示时间向过去偏移`15s` ,也就是`00:00:50` 。那么以`00:00:50` 为基准，获取过期最近一次的采集数据就是`指标D`。
+
+同理，`prometheus_http_requests_total{handler="/metrics"}[30s] offset 15s`   获取的采样数据列表就是 `样本C ` 、`数据D`。 如图所示
+
+<img src="./src/offset_after.png" width="90%" height="50%" alt="offset结果示意图">
+
+
 
 ## PromQL操作符与关键字
 
