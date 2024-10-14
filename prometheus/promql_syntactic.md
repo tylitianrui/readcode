@@ -19,6 +19,9 @@
 - `Scalar`（标量） 一个简单的浮点值。
 - `String` 一个简单的字符串，目前暂未使用。暂时忽略；  
   
+
+
+
 ### 时序选择器
 
 在`PromQL` 中有两种时序选择器： `Instant Vector Selectors`(即时向量选择器) 和 `Range Vector Selectors`（范围向量选择器）。  
@@ -97,7 +100,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 #### offset  时间位移操作
 
-上文无论时间向量查询还是范围向量的查询都是基于当前时间点的。 `prometheus_http_requests_total{handler="/metrics"}` 表示最新的一次采集样本的数据；`prometheus_http_requests_total{handler="/metrics"}[30s]`表示最近`30s`内的所有采样数据。示意图如下：如果**当前**时间是`00:01:05` ，查询 `prometheus_http_requests_total{handler="/metrics"}`  返回的是`采样F`;查询`prometheus_http_requests_total{handler="/metrics"}[30s]`返回的数据列表是`采样D`、`采样F`。
+上文无论即间向量查询还是范围向量的查询都是基于**当前时间点**的。 `prometheus_http_requests_total{handler="/metrics"}` 表示最新的一次采集样本的数据；`prometheus_http_requests_total{handler="/metrics"}[30s]`表示最近`30s`内的所有采样数据。示意图如下：如果**当前**时间是`00:01:05` ，查询 `prometheus_http_requests_total{handler="/metrics"}`  返回的是`采样F`;查询`prometheus_http_requests_total{handler="/metrics"}[30s]`返回的数据列表是`采样D`、`采样F`。
 
 
 
@@ -109,7 +112,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 这是时间是基于当前时间的。如果我们想基于一个过去时间去查询指标呢？例如基于`15s`之前的数据。这时候就需要 时间位移操作`offset`了。
 
-用法 `offset <时间间隔>`   
+**用法** `offset <时间间隔>`   
 
 我们看一下 `prometheus_http_requests_total{handler="/metrics"} offset 15s`  这个查询语句。如果**当前**时间是`00:01:05` ，那么`offset 15s`  表示时间向过去偏移`15s` ,也就是`00:00:50` 。那么以`00:00:50` 为基准，获取过期最近一次的采集数据就是`指标D`。
 
@@ -119,17 +122,21 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 
 
-## PromQL操作符与关键字
+### PromQL运算符
 
-### PromQL操作符
+`PromQL`运算符支持的运算符有三种类型:
+
+- 算术运算符
+- 比较运算符
+- 逻辑运算符
 
 #### 算数运算符
 
-`prometheus`支持算数运算符加(`+`)、减(`-`)、乘(`*`)、除(`/`)、取模(`%)`、乘方(`^`)。只能使用于`instant vector` 和 `Scalar`类型的计算。不能用于`Range vector`（范围向量），只有双方**标签一致**的才能进行计算，即[向量匹配](#向量匹配vector-matching)
+`prometheus`支持6种算数运算符：加(`+`)、减(`-`)、乘(`*`)、除(`/`)、取模(`%)`、乘方(`^`)。这6种运算符只能使用于`instant vector`(即时向量) 和 `Scalar`(标量)的计算，不能用于`Range vector`（范围向量）。如果计算的双方都是**即时向量**，必须遵守[向量匹配](#向量匹配vector-matching)原则
 
 ##### **示例1**：算数运算符基本使用  
 
-执行`(prometheus_http_requests_total + prometheus_http_requests_total + 1)/2`
+执行`(prometheus_http_requests_total + prometheus_http_requests_total + 1 )/2`
 
 ![prometheus_http_requests_total_arithmetic_ops_demo](./src/prometheus_http_requests_total_arithmetic_ops_demo.png)  
 
@@ -149,9 +156,8 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 ##### **示例3** 标签匹配
 
-`instant vector` 与 `instant vector`之间使用算数运算时，会将左侧`instant vector`的标签与右侧`instant vector`的标签进行对比，只有两者标签相同，才能进行算数运算输出结果，即[向量匹配](#向量匹配vector-matching). 
+算数运算的双方都是即时向量时，会将左侧`instant vector`的标签与右侧`instant vector`的标签进行对比。只有两者标签相同，才能进行算数运算，否则不能计算。这就是[向量匹配](#向量匹配vector-matching). 
 <br>
-
 
 执行`prometheus_http_requests_total{handler="/api/v1/query"} +  prometheus_http_requests_total{handler="/api/v1/query",code="200"}`  
 只能输出` prometheus_http_requests_total{handler="/api/v1/query",code="200",...} `的结果，不可能输出 ` prometheus_http_requests_total{handler="/api/v1/query",code="400",...} `结果  
@@ -189,7 +195,29 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 <br>
 
-##### **示例2:** bool配合比较运算符使用
+**示例2:错误率统计**  
+
+工作中，比较运算符最常用在错误率统计、告警这类场景中。一般情况下，这类场景都会设定一个阈值。例如：在监控面板上展示接口状态码非`200`并且 `qps`大于5的请求。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### **示例3:** bool配合比较运算符使用
 
 `prometheus_http_requests_total > bool 50` 查询请求量大于`50`的指标,如果大于`50`，返回`1`；否则返回`0`。 如图所示
 
