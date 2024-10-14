@@ -10,10 +10,10 @@
 
 `PromQL` 查询结果有四种数据类型：  
 
-- **`Instant vector`**（即时向量）每个时间序列，在任意时间点都**只包含一个样本**,例如：`prometheus` 接收到接口`/metrics`的请求数量`prometheus_http_requests_total{handler="/metrics"}` 。在截止到当前时间点，请求数量只有一个样本。如图：
+- **`Instant vector`**（即时向量）获取指定时序在任意时间点的采样样本，即**一个时间点的采样数据**。例如：`prometheus` 接收到接口`/metrics`的请求数量`prometheus_http_requests_total{handler="/metrics"}` 。如图：
   ![prometheus instant  vector demo](./src/intant_vecor.png)  
   
-- **`Range vector`**（范围向量）每个时间序列都包含一系列时间范围内的数据点，即**多个样本**,例如: `prometheus` 接收到接口`/metrics`的最近3分钟之内的请求数量 `prometheus_http_requests_total{handler="/metrics"}[3m]` 请求数量是一组样本。如图：
+- **`Range vector`**（范围向量）获取指定时序，一段指定时间范围的所有采样样本，即**一段时间范围的所有采样点**。例如: `prometheus` 接收到接口`/metrics`的最近3分钟之内的请求数量 `prometheus_http_requests_total{handler="/metrics"}[3m]` 请求数量是所有的样本。如图：
    ![prometheus range  vector demo](./src/range_vector_demo.png)  
 
 - `Scalar`（标量） 一个简单的浮点值。
@@ -22,13 +22,11 @@
 
 
 
-### 时序选择器
-
 在`PromQL` 中有两种时序选择器： `Instant Vector Selectors`(即时向量选择器) 和 `Range Vector Selectors`（范围向量选择器）。  
 
 #### Instant Vector Selectors(即时向量选择器)
 
-`Instant Vector Selectors`(即时向量选择器) 对象是一组指定的时间序列，获取每个时序在某个给定的时间戳上的一个样本。官方说明：  
+`Instant Vector Selectors`(即时向量选择器) 获取指定时序在某一指定时间点的采样样本。官方说明：  
 
 ```text
 Instant vector selectors allow the selection of a set of time series and a single sample value for each at a given timestamp (point in time).
@@ -38,8 +36,8 @@ Instant vector selectors allow the selection of a set of time series and a singl
 
 即时向量选择器由两部分组成：
 
-- metric name：指标名，指定一组时序，必选;
-- 标签选择器: 用于过滤时序上的标签，定义于`{}`内，多个过滤条件使用逗号`,` 分割。可选; 标签过滤有四种运算符：
+- `metric name`：指标名，指定一组时序，必选;
+- 标签选择器: 用于过滤时序上的标签，定义于`{}`内，多个过滤条件使用逗号`,` 分割。可选。标签过滤有四种运算符：
   - `=` 文本完全匹配，用于‘仅包含xxxx’的逻辑
   - `!=` 文本不匹配，用于‘排除xxxx’的逻辑
   - `=~` 选择正则表达式 匹配
@@ -54,7 +52,7 @@ Instant vector selectors allow the selection of a set of time series and a singl
 
 <br>
 
-带有标签选择器的即时向量选择器。例如:获取`/metrics`接口并且状态码为200的请求数量：  
+带有标签选择器的即时向量选择器。例如:获取`/metrics`接口并且状态码为`200`的请求数量：  
 
 ```text
 prometheus_http_requests_total{handler="/metrics",code="200"}
@@ -70,7 +68,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}
 
 #### Range Vector Selectors（范围向量选择器）
 
-`Range Vector Selectors`（范围向量选择器）对象是**一组指定的时间序列**，获取每个时序在给定的**时间范围**上的**一组**样本。范围向量选择器需要在表达式后紧跟一个方括号`[]`来表示选择的时间范围。官方说明：
+`Range Vector Selectors`（范围向量选择器）获取指定时序在一段指定时间范围的所有采样样本。范围向量选择器需要在表达式后紧跟一个方括号`[]`来表示选择的时间范围。官方说明：
 
 ```text
 Range vector literals work like instant vector literals, except that they select a range of samples back from the current instant. Syntactically, a time duration is appended in square brackets ([]) at the end of a vector selector to specify how far back in time values should be fetched for each resulting range vector element. 
@@ -80,13 +78,13 @@ Range vector literals work like instant vector literals, except that they select
 
 支持的时间单位如下，但在生产环境中，一般使用秒级或者分钟级别的数据。
 
-- `ms` - milliseconds
-- `s` - seconds
-- `m` - minutes
-- `h` - hours
-- `d` - days - assuming a day always has 24h
-- `w` - weeks - assuming a week always has 7d
-- `y` - years - assuming a year always has 365d  
+- `ms` - milliseconds  毫秒
+- `s` - seconds  秒
+- `m` - minutes 分钟
+- `h` - hours  小时
+- `d` - days - assuming a day always has 24h  天
+- `w` - weeks - assuming a week always has 7d  周
+- `y` - years - assuming a year always has 365d  年
 
 <br>
 
@@ -199,19 +197,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 工作中，比较运算符最常用在错误率统计、告警这类场景中。一般情况下，这类场景都会设定一个阈值。例如：在监控面板上展示接口状态码非`200`并且 `qps`大于5的请求。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+Todo
 
 
 
