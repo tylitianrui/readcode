@@ -140,7 +140,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 ##### **示例3** 标签匹配
 
-算数运算的双方都是即时向量时，会将左侧`instant vector`的标签与右侧`instant vector`的标签进行对比。只有两者标签相同，才能进行算数运算，否则不能计算。这就是[向量匹配](#向量匹配vector-matching). 
+算数运算的双方都是即时向量时，会将左侧即时向量的标签与右侧即时向量的标签进行对比。只有两者标签相同，才能进行算数运算，否则不能计算。这就是[向量匹配](#向量匹配vector-matching). 
 <br>
 
 执行`prometheus_http_requests_total{handler="/api/v1/query"} +  prometheus_http_requests_total{handler="/api/v1/query",code="200"}`  
@@ -152,15 +152,17 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 
 
-##### **示例4**：不同指标运算
+##### **示例4**：不同指标之间的算数运算
 
 上述示例使用`prometheus_http_requests_total`指标进行演示的，那么不同指标是否可以进行算术运算呢？ 答案当然是可以的，但是必须遵守**标签匹配**的原则，即[向量匹配](#向量匹配vector-matching). 
 
-不同指标分为如下请求：
+不同指标分为如下几种场景：
 
-- 同一类型的不同指标，例如`go_memstats_mallocs_total + prometheus_engine_query_samples_total`  前后都是`counter`类型
-- 不同类型的指标,例如 `go_gc_cycles_automatic_gc_cycles_total  + go_sched_goroutines_goroutines`,`go_gc_cycles_automatic_gc_cycles_total`是`counter`类型，后者是`gauge`类型
-- `histogram` 和 `summary`只能在本类型之间进行算数运算，因为`histogram`类型中包含特有标签`le`；`summary`类型中包含特有标签`quantile`，无法和其他类型进行标签匹配，即[向量匹配](#向量匹配vector-matching). 
+- 同一类型的不同指标,例如`go_memstats_mallocs_total + prometheus_engine_query_samples_total`  前后都是`counter`类型
+
+- 不同类型的指标,例如：`go_gc_cycles_automatic_gc_cycles_total+go_sched_goroutines_goroutines`,  前者是`counter`类型，后者是`gauge`类型
+
+  
 
 
 #### 比较运算符
@@ -181,9 +183,31 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 **示例2:错误率统计**  
 
-工作中，比较运算符最常用在错误率统计、告警这类场景中。一般情况下，这类场景都会设定一个阈值。例如：在监控面板上展示接口状态码非`200`并且 `qps`大于5的请求。
+工作中，比较运算符最常用在错误率统计、告警这类场景中。一般情况下，这类场景都会设定一个阈值。
 
-Todo
+下面我们在在监控面板上查询 接口状态码非`200`并且 `qps`大于10的请求，查询语句`irate(prometheus_http_requests_total{code != "200"}[5m]) > 10`
+
+`prometheus` 提供很多[API](https://prometheus.io/docs/prometheus/2.53/querying/api/) ，我们任选一个模拟参数错误的请求。例如获取即时向量的接口`GET /api/v1/query`   人为地传递错误的参数,如下：
+
+``````shell
+curl  http://127.0.0.1:9090/api/v1/query  -i 
+``````
+
+
+
+批量地发送上面请求
+
+语句`irate(prometheus_http_requests_total{code != "200"}[5m])` 执行效果，如下图：
+
+<img src="./src/prometheus_http_requests_total_error.png" width="100%" height="60%" alt="offset结果示意图">
+
+
+
+
+
+语句`irate(prometheus_http_requests_total{code != "200"}[5m]) > 10`  执行效果，如下图：
+
+<img src="./src/prometheus_http_requests_total_error_10.png" width="100%" height="60%" alt="offset结果示意图">
 
 
 
@@ -191,9 +215,13 @@ Todo
 
 ##### **示例3:** bool配合比较运算符使用
 
-`prometheus_http_requests_total > bool 50` 查询请求量大于`50`的指标,如果大于`50`，返回`1`；否则返回`0`。 如图所示
+语句``irate(prometheus_http_requests_total{code != "200"}[5m])> bool 10`表示 只有状态码不是`200` 并且`QPS`超过10，才返回`1`；否则返回`0`。 
 
-![prometheus_http_requests_total_greater_50_bool](./src/prometheus_http_requests_total_greater_50_bool.png)
+执行结果，如下图：
+
+<img src="./src/prometheus_http_requests_total_error_10_bool.png" width="100%" height="60%" alt="offset结果示意图">
+
+
 
 
 #### 逻辑运算符
@@ -346,3 +374,22 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 
 
+案例说明：
+
+语句 `prometheus_http_requests_total{code="400",handler="/api/v1/query"}`
+
+<img src="./src/1_n_1.png" width="100%" height="60%" alt="offset结果示意图">
+
+
+
+
+
+语句`prometheus_http_requests_total{code="400"}`
+
+<img src="./src/1_n_n.png" width="100%" height="60%" alt="offset结果示意图">
+
+
+
+语句`prometheus_http_requests_total{code="400",handler="/api/v1/query"} / on(code) group_right prometheus_http_requests_total`
+
+<img src="./src/1_n_result.png" width="100%" height="60%" alt="offset结果示意图">
