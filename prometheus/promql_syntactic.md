@@ -13,7 +13,7 @@
 - **`Instant vector`**（即时向量）获取指定时序在任意时间点的采样样本，即**一个时间点的采样数据**。例如：`prometheus` 接收到接口`/metrics`的请求数量`prometheus_http_requests_total{handler="/metrics"}` 。如图：
   ![prometheus instant  vector demo](./src/intant_vecor.png)  
   
-- **`Range vector`**（范围向量）获取指定时序，一段指定时间范围的所有采样样本，即**一段时间范围的所有采样点**。例如: `prometheus` 接收到接口`/metrics`的最近3分钟之内的请求数量 `prometheus_http_requests_total{handler="/metrics"}[3m]` 请求数量是所有的样本。如图：
+- **`Range vector`**（范围向量）获取指定时序，一段指定时间范围的所有采样样本，即**一段时间范围的所有采样点**。例如:  获取`prometheus_http_requests_total{handler="/metrics"}`在最近30s内的所有样本。如图：
    ![prometheus range  vector demo](./src/range_vector_demo.png)  
 
 - `Scalar`（标量） 一个简单的浮点值。
@@ -26,33 +26,25 @@
 
 #### Instant Vector Selectors(即时向量选择器)
 
-`Instant Vector Selectors`(即时向量选择器) 获取指定时序在某一指定时间点的采样样本。官方说明：  
-
-```text
-Instant vector selectors allow the selection of a set of time series and a single sample value for each at a given timestamp (point in time).
-```
-
-<br>
+`Instant Vector Selectors`(即时向量选择器) 查出即时向量的选择器就是即时向量选择器，是以查询出的结果看的
 
 即时向量选择器由两部分组成：
 
 - `metric name`：指标名，指定一组时序，必选;
 - 标签选择器: 用于过滤时序上的标签，定义于`{}`内，多个过滤条件使用逗号`,` 分割。可选。标签过滤有四种运算符：
-  - `=` 文本完全匹配，用于‘仅包含xxxx’的逻辑
-  - `!=` 文本不匹配，用于‘排除xxxx’的逻辑
-  - `=~` 选择正则表达式 匹配
-  - `!~` 选择正则表达式 不匹配
+  - `=`      文本完全匹配
+  - `!=`    文本不匹配
+  - `=~`    选择正则表达式 匹配
+  - `!~`    选择正则表达式 不匹配
 
 <br>
 
-最简单形式的即时向量选择器只有`metric name`。 例如： `prometheus_http_requests_total` 表示 `prometheus` 接收到`http`请求数量。如图：
-
-  ![prometheus_http_requests_total_instant_vector](./src/prometheus_http_requests_total_instant_vector.png)  
+最简单形式的即时向量选择器只有`metric name`。 例如： `prometheus_http_requests_total` 表示 `prometheus` 接收到`http`请求数量。如图：  ![prometheus_http_requests_total_instant_vector](./src/prometheus_http_requests_total_instant_vector.png)  
 
 
 <br>
 
-带有标签选择器的即时向量选择器。例如:获取`/metrics`接口并且状态码为`200`的请求数量：  
+带有标签过滤的即时向量选择器。例如:获取`/metrics`接口并且状态码为`200`的请求数量：  
 
 ```text
 prometheus_http_requests_total{handler="/metrics",code="200"}
@@ -63,20 +55,14 @@ prometheus_http_requests_total{handler="/metrics",code="200"}
 例如:获取`/api/v1/` 为前缀的请求数量：
 
 ```text
-prometheus_http_requests_total{handler=~ "/api/v1/.+"}
+prometheus_http_requests_total{handler=~"/api/v1/.+"}
 ```
 
 #### Range Vector Selectors（范围向量选择器）
 
-`Range Vector Selectors`（范围向量选择器）获取指定时序在一段指定时间范围的所有采样样本。范围向量选择器需要在表达式后紧跟一个方括号`[]`来表示选择的时间范围。官方说明：
+`Range Vector Selectors`（范围向量选择器）查询出范围向量就是范围向量选择器。范围向量选择器需要在表达式后紧跟一个方括号`[]`来表示选择的时间范围<br>
 
-```text
-Range vector literals work like instant vector literals, except that they select a range of samples back from the current instant. Syntactically, a time duration is appended in square brackets ([]) at the end of a vector selector to specify how far back in time values should be fetched for each resulting range vector element. 
-```
-
-<br>
-
-支持的时间单位如下，但在生产环境中，一般使用秒级或者分钟级别的数据。
+范围向量选择器支持的时间单位如下，但在生产环境中，一般使用**秒**或者**分钟**级别的数据。
 
 - `ms` - milliseconds  毫秒
 - `s` - seconds  秒
@@ -88,10 +74,10 @@ Range vector literals work like instant vector literals, except that they select
 
 <br>
 
-例如:获取`/api/v1/` 为前缀且3分钟内的请求数量
+例如:获取指标`prometheus_http_requests_total{handler=~ "/api/v1/.+"}` 在最近3分钟内所有的采样数据
 
 ```
-prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
+prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 ```
 
 
@@ -187,7 +173,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[3m]
 
 ##### **示例1:** 比较运算符基本使用
 
-查询出请求量大于50的指标 `prometheus_http_requests_total > 50`  如图  
+查询指标`prometheus_http_requests_total`大于50的时间序列，即 `prometheus_http_requests_total > 50`  如图  
 
 ![prometheus_http_requests_total_greater_50](./src/prometheus_http_requests_total_greater_50.png) 
 
@@ -273,15 +259,44 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 ### 向量匹配Vector Matching
 
-在上面讲述里，我们可以看到，向量与向量之间运算时会基于默认的匹配规则:依次找到与左侧向量**标签完全一致**的右边向量元素进行运算;如果标签不一致，则直接丢弃。
+在上面讲述里，我们可以看到，即时向量之间运算时会遵守匹配规则。
+`PromQL`中有中匹配模式有两种：
 
-如果计算**http状态码为302的请求数**占**采集metrics请求数**的比例，即(*`prometheus_http_requests_total{code ="302"}` 与 `prometheus_http_requests_total{handler="/metrics"}`的比值*)。如果直接使用`prometheus_http_requests_total{code ="302"} / prometheus_http_requests_total{handler="/metrics"}` 计算，可以看到没有匹配任何结果。 如图:  
+- `一对一（one-to-one`）
+- `多对一（many-to-one）或一对多（one-to-many）`。
+
+#### 一对一向量匹配
+
+即时向量之间运算时会遵守匹配规则
+
+- 在两侧的即时向量中，找**标签完全一致**的样本，进行运算
+- 如果找不到标签不一致，则不会出现在计算结果里
+
+用法:
+
+```
+<vector expr>  <bin-op>  [ignoring(<label list>)]  <vector expr>
+<vector expr>  <bin-op>  [on(<label list>)]        <vector expr>
+```
+
+
+
+一对一向量匹配是是**唯一**的，针对左侧的时序样本，只有唯一的右侧与之匹配
+
+![一对一示意图](./src/one_to_one_shiyitu.png)  
+
+
+
+
+
+如果计算**http状态码为302的请求数**占**采集metrics请求数**的比例，即(`prometheus_http_requests_total{code ="302"}` *与* `prometheus_http_requests_total{handler="/metrics"}`的比值)。如果直接使用`prometheus_http_requests_total{code ="302"} / prometheus_http_requests_total{handler="/metrics"}` 计算，可以看到没有匹配任何结果。 如图:  
 
 <br>
 
 ![向量匹配错误案例](./src/vector_matching_error_demo.png)  
 
 原因  
+
 
 |`prometheus_http_requests_total{code ="302"}`| `prometheus_http_requests_total{handler="/metrics"}`  |匹配结果(标签完全匹配)   |分析   |
 | :-----| :---- | :---- | :---- |
@@ -290,32 +305,11 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 原因就在于需要左右侧标签完全一致，才可以匹配, 本例子中不能完全匹配，所以结果为空。
 
 
-显然，这种默认的匹配规则比较死板，本节介绍向量匹配的更多用法。
-`PromQL`中有中匹配模式：`一对一（one-to-one`）,`多对一（many-to-one）或一对多（one-to-many）`。
-
-<!-- prometheus_http_requests_total{code ="302"} / ignoring(code,handler) prometheus_http_requests_total{handler="/metrics"} -->
-
-#### 一对一向量匹配
-
-`一对一`向量匹配就是操作符**左右两侧**都是唯一的样本值,即`1:1`，并不是结果只有唯一的样本值，输出结果可以是多对。 前文所述的**标签完全一致**匹配，都是一对一向量匹配的案例。示意图如下：  
-
-![一对一示意图](./src/one_to_one_shiyitu.png)
-
-
 
 如果只需要操作符左右两侧**部分标签进行匹配**，就需要使用关键字进行处理
 
 - `on(label1[,label2, label3,...])`  只使用指定的`label`进行匹配,例如 `on(code，handler)` 只使用`code`，`handler`标签进行匹配
 - `ignoring(label1[,label2, label3,...])` 排除指定的`label`，使用剩余的`label`进行匹配,例如 `ignoring(code，handler)` 标签`code`，`handler`不参与匹配。
-
-
-上述实例
-
-|`prometheus_http_requests_total{code ="302"}`| `prometheus_http_requests_total{handler="/metrics"}`  |匹配结果(标签完全匹配)   |分析   |
-| :-----| :---- | :---- | :---- |
-| `prometheus_http_requests_total{code="302", handler="/", instance="localhost:9090", job="prometheus"}      2` | `prometheus_http_requests_total{code="200", handler="/metrics", instance="localhost:9090", job="prometheus"}  1010` | 无  |标签`code`、`handler`不匹配 |
-
-<br>
 
 那我们使用`ignoring(code，handler)`让标签`code`，`handler`不参与匹配，即`prometheus_http_requests_total{code ="302"} / ignoring(code,handler) prometheus_http_requests_total{handler="/metrics"}`,则可以获取**http状态码为302的请求数**占**采集metrics请求数**的比例。如图  
 
@@ -323,14 +317,32 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 由图可以看到，匹配的标签只有`instance` ,`job`。
 
+
+
 同样我们可以使用`on`来处理上述案例，我们只需要使用`instance` ,`job`标签匹配,即`prometheus_http_requests_total{code ="302"} / on(instance,job) prometheus_http_requests_total{handler="/metrics"}` 也可以达到相同的效果。
 
 
-注：`一对一`向量匹配并不是结果只有唯一的样本值，输出结果可以是多对。 例如 `prometheus_http_requests_total{code !="302"} /(prometheus_http_requests_total{handler=~"/api/v1/label.*"} + 1)` 结果就是多对。
+
+`一对一`向量匹配每个样本的匹配是唯一的，并不是输出结果是唯一的，输出结果可以是多对。 例如 `prometheus_http_requests_total{code !="302"} /(prometheus_http_requests_total{handler=~"/api/v1/label.*"} + 1)` 结果就是多对。
 
 ![多对一对一向量匹配](./src/vector_matching_1to1_many_groups.png) 
 
 
+
 #### 一对多或者多对一向量匹配
 
-`一对多或者多对一向量匹配` 是**操作符左侧一个样本值对应右侧的多个样本即`1:n`** 或者 **操作符右侧一个样本值对应左侧的多个样本，即`n:1`**。
+- 操作符左侧一个样本值对应右侧的多个样本(一对多)或者操作符左侧的多个样本对应右侧一个样本值(多对一)
+- 必须使用`group_left`或者`group_right`指定"多"的一侧
+- 使用`on`或者`ignoring` 筛选参与匹配的标签
+
+用法:
+
+```
+<vector expr> <bin-op> ignoring(<label list>) group_left(<label list>) <vector expr>
+<vector expr> <bin-op> ignoring(<label list>) group_right(<label list>) <vector expr>
+<vector expr> <bin-op> on(<label list>) group_left(<label list>) <vector expr>
+<vector expr> <bin-op> on(<label list>) group_right(<label list>) <vector expr>
+```
+
+
+
