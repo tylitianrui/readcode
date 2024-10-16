@@ -6,9 +6,9 @@
 
 官方文档: [https://prometheus.io/docs/prometheus/latest/querying/basics/](https://prometheus.io/docs/prometheus/latest/querying/basics/)  
 
-## 基本语法
 
-### 表达式或子表达式的数据类型
+
+## 表达式或子表达式的数据类型
 
 `PromQL` 表达式有四种数据类型：**`Instant vector`**（即时向量）、**`Range vector`**（范围向量）、标量、字符串
 
@@ -107,7 +107,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 
 
-### PromQL运算符
+## PromQL运算符
 
 `PromQL`运算符支持的运算符有三种类型:
 
@@ -115,11 +115,11 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 - 比较运算符
 - 逻辑运算符
 
-#### 算数运算符
+### 算数运算符
 
 `prometheus`支持6种算数运算符：加(`+`)、减(`-`)、乘(`*`)、除(`/`)、取模(`%)`、乘方(`^`)。这6种运算符只能使用于`instant vector`(即时向量) 和 `Scalar`(标量)的计算，不能用于`Range vector`（范围向量）。如果计算的双方都是**即时向量**，必须遵守[向量匹配](#向量匹配vector-matching)原则
 
-##### **示例1**：算数运算符基本使用  
+#### **示例1**：算数运算符基本使用  
 
 执行`(prometheus_http_requests_total + prometheus_http_requests_total + 1 )/2`
 
@@ -127,7 +127,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 <br>
 
-##### **示例2**：**错误示例** `Range vector`参与算数运算符  
+#### **示例2**：**错误示例** `Range vector`参与算数运算符  
 
 执行`prometheus_http_requests_total + prometheus_http_requests_total[1m] + 1` ,会报错`parse error: binary expression must contain only scalar and instant vector types`
 
@@ -139,7 +139,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 <br>
 
-##### **示例3** 标签匹配
+#### **示例3** 标签匹配
 
 算数运算的双方都是即时向量时，会将左侧即时向量的标签与右侧即时向量的标签进行对比。只有两者标签相同，才能进行算数运算，否则不能计算。这就是[向量匹配](#向量匹配vector-matching). 
 <br>
@@ -153,7 +153,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 
 
-##### **示例4**：不同指标之间的算数运算
+#### **示例4**：不同指标之间的算数运算
 
 上述示例使用`prometheus_http_requests_total`指标进行演示的，那么不同指标是否可以进行算术运算呢？ 答案当然是可以的，但是必须遵守**标签匹配**的原则，即[向量匹配](#向量匹配vector-matching). 
 
@@ -166,7 +166,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
   
 
 
-#### 比较运算符
+### 比较运算符
 
 `prometheus`支持比较算符 等于(`==`)、不等于(`!=`)、大于(`>`)、大于等于(`>=`)、小于(`<`)、小于等于(`<=`)。只能使用于`instant vector` 和 `Scalar`类型的计算，不能用于`Range vector`（范围向量）。  
 
@@ -174,7 +174,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 <br>
 
-##### **示例1:** 比较运算符基本使用
+#### **示例1:** 比较运算符基本使用
 
 查询指标`prometheus_http_requests_total`大于50的时间序列，即 `prometheus_http_requests_total > 50`  如图  
 
@@ -182,7 +182,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 <br>
 
-**示例2:错误率统计**  
+#### **示例2:错误率统计**  
 
 工作中，比较运算符最常用在错误率统计、告警这类场景中。一般情况下，这类场景都会设定一个阈值。
 
@@ -214,7 +214,7 @@ curl  http://127.0.0.1:9090/api/v1/query  -i
 
 
 
-##### **示例3:** bool配合比较运算符使用
+#### **示例3:** bool配合比较运算符使用
 
 语句``irate(prometheus_http_requests_total{code != "200"}[5m])> bool 10`表示 只有状态码不是`200` 并且`QPS`超过10，才返回`1`；否则返回`0`。 
 
@@ -225,7 +225,7 @@ curl  http://127.0.0.1:9090/api/v1/query  -i
 
 
 
-#### 逻辑运算符
+### 逻辑运算符
 
 `prometheus`支持逻辑运算符 `and`(交集)、`or`(并集)、`unless`(差集)，只用于`instant vector`之间的运算。为了方便读者理解，本节所有案例使用相同的样本进行说明。
 在[http://127.0.0.1:9090/metrics](http://127.0.0.1:9090/metrics)任意选择两个样本，本次选取`go_gc_duration_seconds`、`prometheus_tsdb_wal_fsync_duration_seconds`。  
@@ -252,7 +252,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 ```
 
 
-##### **示例1:** 逻辑运算符-交集基本使用
+#### **示例1:** 逻辑运算符-交集基本使用
 
 `A and B`过滤出`A`、`B`的标签相等的指标`A`。 文氏图表示：
 ![a_and_b](./src/a_and_b.png)  
@@ -264,7 +264,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 ![go_gc_heap_allocs_by_size_bytes_bucket and go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_and_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
 
-##### **示例2:** 逻辑运算符-并集基本使用
+#### **示例2:** 逻辑运算符-并集基本使用
 
 `A or B` 文氏图表示：
 ![a_or_b](./src/a_or_b.png)  
@@ -276,7 +276,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 ![go_gc_heap_allocs_by_size_bytes_bucket or go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_or_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
-##### **示例3:** 逻辑运算符-差集基本使用
+#### **示例3:** 逻辑运算符-差集基本使用
 
 `A unless B` 文氏图表示：
 ![a_unless_b](./src/a_unless_b.png)  
@@ -286,7 +286,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 ![go_gc_heap_allocs_by_size_bytes_bucket unless go_gc_heap_frees_by_size_bytes_bucket](./src/go_gc_duration_seconds_unless_prometheus_tsdb_wal_fsync_duration_seconds.png)
 
 
-### 向量匹配Vector Matching
+## 向量匹配Vector Matching
 
 在上面讲述里，我们可以看到，即时向量之间运算时会遵守匹配规则。
 `PromQL`中有中匹配模式有两种：
@@ -294,7 +294,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 - `一对一（one-to-one`）
 - `多对一（many-to-one）或一对多（one-to-many）`。
 
-#### 一对一向量匹配
+### 一对一向量匹配
 
 即时向量之间运算时会遵守匹配规则
 
@@ -358,7 +358,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 0
 
 
 
-#### 一对多或者多对一向量匹配
+### 一对多或者多对一向量匹配
 
 - 操作符左侧一个样本值对应右侧的多个样本(一对多)或者操作符左侧的多个样本对应右侧一个样本值(多对一)
 - 必须使用`group_left`或者`group_right`指定"多"的一侧
