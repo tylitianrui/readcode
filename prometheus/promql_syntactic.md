@@ -1,8 +1,8 @@
 # 8.1 PromQL基本语法
 
-`Prometheus` 提供了一种查询语言`PromQL`，`PromQL`允许用户**实时地**去查询和聚合时序数据。查询出来的结果可以被展示为图形、表格等形式
+`Prometheus` 提供了一种查询语言`PromQL`，`PromQL`允许用户**实时地**去查询和聚合时序数据。查询出来的结果可以被展示为图形、表格等形式。
 
-第三方系统可以通过`RESTful API` 获取`PromQL`执行结果，例如`grafana`
+第三方系统可以通过`RESTful API` 获取`PromQL`执行结果，例如`grafana`、`Prometheus web UI`
 
 官方文档: [https://prometheus.io/docs/prometheus/latest/querying/basics/](https://prometheus.io/docs/prometheus/latest/querying/basics/)  
 
@@ -10,15 +10,17 @@
 
 ## 表达式或子表达式的数据类型
 
+
+
 `PromQL` 表达式有四种数据类型：**`Instant vector`**（即时向量）、**`Range vector`**（范围向量）、标量、字符串
 
-- **`Instant vector`**（即时向量）获取指定时序在任意时间点的采样样本，即**一个时间点的采样数据**。例如：`prometheus` 接收到接口`/metrics`的请求数量`prometheus_http_requests_total{handler="/metrics"}` 。如图：
+- **`Instant vector`**（即时向量）获取指定时序在指定时间点的采样样本，即**一个时间点的采样数据**。例如：`prometheus` 接收到接口`/metrics`的请求数量`prometheus_http_requests_total{handler="/metrics"}` 。如图：
   ![prometheus instant  vector demo](./src/intant_vecor.png)  
   
 - **`Range vector`**（范围向量）获取指定时序，一段指定时间范围的所有采样样本，即**一段时间范围的所有采样点**。例如:  获取`prometheus_http_requests_total{handler="/metrics"}[30s]`在最近30s内的所有样本。如图：
    ![prometheus range  vector demo](./src/range_vector_demo.png)  
 
-- `Scalar`（标量） 一个简单的浮点值。
+- `Scalar`（标量） 一个简单的浮点值。1.2   6   1000
 - `String` 一个简单的字符串，目前暂未使用。暂时忽略；  
 
 
