@@ -111,7 +111,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 ## PromQL运算符
 
-`PromQL`运算符支持的运算符有三种类型:
+`PromQL`运算符有三种类型:
 
 - 算术运算符
 - 比较运算符
@@ -170,15 +170,15 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 ### 比较运算符
 
-`prometheus`支持比较算符 等于(`==`)、不等于(`!=`)、大于(`>`)、大于等于(`>=`)、小于(`<`)、小于等于(`<=`)。只能使用于`instant vector` 和 `Scalar`类型的计算，不能用于`Range vector`（范围向量）。  
+`prometheus`支持比较算符有6种：等于(`==`)、不等于(`!=`)、大于(`>`)、大于等于(`>=`)、小于(`<`)、小于等于(`<=`)。只能使用于`instant vector`(即时向量) 和 `Scalar`(标量)的运算，不能用于`Range vector`（范围向量)。
 
-日常工作中，关键字`bool` 经常配合比较运算符使用。`bool`关键字会直接跟在比较运算符之后，如果比较运算为`true`，则返回`1`.否则返回`0`,很适合告警的场景中。在告警场景中,并不需要关心指标值具体是多少，只需关心是否触发告警(即：`true` 或 `false`) 即可。具体应用细节会在[告警](./告警.md)说明。
+日常工作中，关键字`bool` 经常配合比较运算符使用。`bool`关键字会直接跟在比较运算符之后，如果比较运算为`true`，则返回`1`.否则返回`0`。很适合告警的场景中。在告警场景中,并不需要关心指标值具体是多少，只需关心是否触发告警(即：`true` 或 `false`) 即可。具体应用细节会在[告警](./告警.md)说明。
 
 <br>
 
 #### **示例1:** 比较运算符基本使用
 
-查询指标`prometheus_http_requests_total`大于50的时间序列，即 `prometheus_http_requests_total > 50`  如图  
+查询指标`prometheus_http_requests_total`大于`50`的时间序列，即 `prometheus_http_requests_total > 50`  如图  
 
 ![prometheus_http_requests_total_greater_50](./src/prometheus_http_requests_total_greater_50.png) 
 
@@ -199,6 +199,11 @@ curl  http://127.0.0.1:9090/api/v1/query  -i
 
 
 批量地发送上面请求
+
+``````shell
+``````
+
+
 
 语句`irate(prometheus_http_requests_total{code != "200"}[5m])` 执行效果，如下图：
 
