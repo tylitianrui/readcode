@@ -54,8 +54,6 @@
 
 服务器ip:`192.168.0.102`
 
-
-
 下载地址 ： https://github.com/prometheus/node_exporter/releases
 
 ``````shell

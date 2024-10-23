@@ -16,9 +16,9 @@
 
 `Discovery Manager`维护三种协程实现服务发现，每种协程负责不同的工作：
 
-- 服务发现协程`discovery goroutine`: 负责执行服务发现的工作
+- 服务发现协程`discovery goroutine`: 是服务发现的实际的“工作者”。在`k8s`、`ec2` 、 `dns`等获取被监控对象的地址
 - 更新协程`updater goroutine`：将服务发现获取的地址等信息更新到`DiscoveryManager`的缓存里
-- 发送协程`sender goroutine`：将最新的target地址信息发送给拉取模块
+- 发送协程`sender goroutine`：将缓存中最新的`targets`地址信息发送给拉取模块
 
 各协程示意图  
 

@@ -1,6 +1,6 @@
-# prometheus功能介绍
+# 2.2 prometheus功能介绍
 
-prometheus功能主要有：
+`prometheus`功能主要有：
 
 - 服务发现
 - 标签处理
@@ -259,7 +259,6 @@ prometheus_rule_group_duration_seconds_count 0
 ```
 remote_write:
   - url: "http://remote-write-url"
-
 ```
 
 

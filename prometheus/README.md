@@ -12,7 +12,7 @@
 - 第二章：prometheus简述
   - [prometheus架构](prometheus简述.md)
   - [prometheus功能介绍](prometheus功能介绍.md)
-  - [prometheus server模块介绍](prometheus_server模块.md)
+  - [prometheus server中的代码模块](prometheus_server模块.md)
   - [prometheus server启动-main函数分析](prometheus_server启动.md)
   - [开发基于prometheus client的target](开发基于prometheus_client的target.md)
   
