@@ -1,6 +1,9 @@
-# prometheus server启动逻辑
+# 2.4 prometheus启动流程-main函数分析
 
-## 项目代码目录
+1. 代码结构
+2. 各模块goroutine的管理(第三方依赖)
+
+## 代码的目录结构
 
 项目代码结构  
 
@@ -27,14 +30,14 @@ prometheus
   ├── model   
   ├── notifier            notifier 告警模块
   ├── plugins
-  ├── prompb
+  ├── prompb     
   ├── promql               promql查询实现
   ├── rules                规则管理模块
   ├── scrape               拉取指标等相关
-  ├── storage              存储相关 remote storage 和 local storage
+  ├── storage              存储相关
   ├── tracing   
   ├── tsdb                 tsdb数据库
-  └── util    
+  └── util                 工具类
 
 ```
 
@@ -43,7 +46,7 @@ prometheus
 在[项目简述与准备](./项目简述与准备.md)部分，代码编译时会创建两个二进制文件：`prometheus`、`promtool`，这两二进制文件入口函数分别是`cmd/prometheus/main.go`、`cmd/promtool/main.go`。本节的重点就是解析`cmd/prometheus/main.go`执行过程。
 
 
-## goroutine管理(第三方依赖)
+## 各模块goroutine的管理(第三方依赖)
 
 在`prometheus`中，使用了很多第三方库，为什么要单独说明这个依赖呢？ 因为`prometheus`所有组件`goroutine`都是通过此依赖(*[代码仓库](https://github.com/oklog/run)*) 进行管理的。  
 
