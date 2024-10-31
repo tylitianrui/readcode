@@ -5,7 +5,7 @@
 1. `prometheus`代码目录结构
 2. 各模块goroutine的编排 管理。有赖于第三方依赖 [github.com/oklog/run](https://github.com/oklog/run)
 
-## 代码的目录结构
+## 1. 代码的目录结构
 
 项目代码结构  
 
@@ -49,36 +49,152 @@ prometheus
 在[项目简述与准备](./项目简述与准备.md)部分，代码编译时会创建两个二进制文件：`prometheus`、`promtool`，这两二进制文件入口函数分别是`cmd/prometheus/main.go`、`cmd/promtool/main.go`。本节的重点就是解析`cmd/prometheus/main.go`执行过程。
 
 
-## 各模块goroutine的管理(第三方依赖`github.com/oklog/run`)
+## 2. 各模块goroutine的编排管理
 
-在`prometheus`中，使用了很多第三方库，为什么要单独说明这个依赖呢？ 因为`prometheus`所有组件`goroutine`都是通过此依赖(*[代码仓库](https://github.com/oklog/run)*) 进行编排管理的。
+在`prometheus`中，使用了很多第三方库，为什么要单独说明这个依赖呢？ 因为`prometheus`所有组件`goroutine`都是通过依赖`github.com/oklog/run`(*注：下文简称`run`,代码仓库[https://github.com/oklog/run](https://github.com/oklog/run)*) 进行编排管理的。
 
-**代码仓库**
+### **API说明**
 
- https://github.com/oklog/run
+`run`有一个类型`Group`,`Group`有两个公共方法：`Add`、`Run`。
+
+#### `func (g *Group) Add(execute func() error, interrupt func(error))` 
+
+将函数`execute`、`interrupt`注到`Group`对象，注册阶段并不会执行`execute`、`interrupt`函数。函数`execute`、`interrupt`是需要开发伙自己去开发的。
+
+- 函数`execute`：实际需要执行的业务逻辑。
+- 函数`interrupt`：执行资源回收、关闭网络连接、关闭文件句柄等**收尾**工作。
+
+#### `func (g *Group) Run() error`   
+
+为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序执行资源回收、关闭网络连接、关闭文件句柄等**收尾**工作
 
 
 
-**原理**
+**demo**
 
- [github.com/oklog/run](https://github.com/oklog/run)执行示意图如下
+``````go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/oklog/run"
+)
+
+func main() {
+	var g run.Group
+	term := make(chan os.Signal, 1)
+	cancel := make(chan struct{})
+	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+
+	time1 := NewXtimer("Xtimer1")
+	time2 := NewXtimer("Xtimer2")
+
+	g.Add(
+		func() error {
+			select {
+			case sig := <-term:
+				fmt.Println("接收到系统信号", sig.String())
+			case <-cancel:
+				fmt.Println("cancel 有信号了")
+			}
+			return fmt.Errorf("接收到系统信号")
+		},
+		func(err error) {
+			fmt.Println("信号监听关闭")
+			close(cancel)
+		},
+	)
+
+	g.Add(
+		time1.PrintTime, time1.Stop,
+	)
+	g.Add(
+		time2.PrintTime, time2.Stop,
+	)
+	if err := g.Run(); err != nil {
+		os.Exit(1)
+	}
+
+}
+
+type Xtimer struct {
+	Name   string
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+func NewXtimer(name string) *Xtimer {
+	ctx, cancel := context.WithCancel(context.TODO())
+	return &Xtimer{
+		Name:   name,
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
+
+func (t *Xtimer) PrintTime() error {
+	for {
+		select {
+		case <-t.ctx.Done():
+			fmt.Println(t.Name, "退出")
+			// return nil
+			return fmt.Errorf("%v stop", t.Name)
+		default:
+			time.Sleep(2 * time.Second)
+			fmt.Println(t.Name, time.Now())
+		}
+	}
+
+}
+
+func (t *Xtimer) Stop(err error) {
+	t.cancel()
+}
+
+``````
+
+执行结果
+
+``````text
+Xtimer1 2024-11-01 00:42:47.592574 +0800 CST m=+6.004138239
+Xtimer2 2024-11-01 00:42:47.592623 +0800 CST m=+6.004186926
+Xtimer2 2024-11-01 00:42:49.593881 +0800 CST m=+8.005391548
+Xtimer1 2024-11-01 00:42:49.593924 +0800 CST m=+8.005435090
+Xtimer1 2024-11-01 00:42:51.59523 +0800 CST m=+10.006687255
+Xtimer2 2024-11-01 00:42:51.595305 +0800 CST m=+10.006761822
+^C
+接收到系统信号 interrupt
+信号监听关闭
+Xtimer1 2024-11-01 00:42:53.596289 +0800 CST m=+12.007691938
+Xtimer2 2024-11-01 00:42:53.59632 +0800 CST m=+12.007723791
+Xtimer2 退出
+Xtimer1 退出
+exit status 1
+``````
+
+
+
+### **代码执行原理**
+
+示意图如下
 
 <img src="./src/run执行流程.drawio.png" width="100%" height="100%" alt="offset默认">
 
-
-
-**API说明**
-
-- `func (g *Group) Add(execute func() error, interrupt func(error))`
-
-  - 执行函数`execute`：实际需要执行的工作
-  - 退出函数`interrupt`：退出函数`interrupt`进行退出、回收等“善后”工作
-
-- `func (g *Group) Run() error` 
-
-   为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序可根据错误处理退出、回收资源等“善后”工作。
-
-
+1. 函数`execute`、函数`interrupt` 都是成对出现的，这一对函数被称为一个`actor`。函数`execute`、函数`interrupt` 是开发者编写的。**编码的时候要求：如果退出函数`interrupt`被调用，那么对应的`execute`函数必须能感知到，并且退出**
+2. `Add`方法会把这一对`actor`函数注册到`Group`类型对象里。`Group`类型对象里维护一个`actor`类型的切片(*注：切片go语言里的可变长数组，非go语言开发者理解为数组即可*)
+3. `Run`方法
+   1. 创建一个容量`chan error` ,容量与`actor`切片长度相等。
+   2. 为每个函数`execute`都开启一个独立的`goroutine`去运行。如果某一个函数`execute`执行报错，错误就会被发送到`chan error` 
+   3. 监听`chan error`。如果没有监听到错误，程序被阻塞；如果监听到错误，程序退出阻塞状态，执行后续的退出逻辑。
+   4.  如果接收的error 是从`chan error`里接收的第一个`error`,遍历执行所有的`interrupt` 函数；
+   5. `interrupt` 函数执行，对应的函数`execute`就会退出。函数`execute`退出时会向`chan error` 发生一个`error`类型的数据。退出逻辑接收到所有函数`execute`退出时的error，则认为函数`execute`全部退出。
+   6. 程序关闭
 
 **补充**
 
@@ -136,7 +252,7 @@ prometheus
 
 
 
-## main函数执行
+## 3. main函数执行流程分析
 
 ### 执行流程图  
 
