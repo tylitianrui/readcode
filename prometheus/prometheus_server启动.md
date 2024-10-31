@@ -72,6 +72,8 @@ prometheus
 
 **demo**
 
+[代码](https://github.com/tylitianrui/readcode/tree/master/prometheus/run_demo)
+
 ``````go
 package main
 
