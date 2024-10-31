@@ -46,15 +46,45 @@ prometheus
 在[项目简述与准备](./项目简述与准备.md)部分，代码编译时会创建两个二进制文件：`prometheus`、`promtool`，这两二进制文件入口函数分别是`cmd/prometheus/main.go`、`cmd/promtool/main.go`。本节的重点就是解析`cmd/prometheus/main.go`执行过程。
 
 
-## 各模块goroutine的管理(第三方依赖)
+## 各模块goroutine的管理(第三方依赖`github.com/oklog/run`)
 
-在`prometheus`中，使用了很多第三方库，为什么要单独说明这个依赖呢？ 因为`prometheus`所有组件`goroutine`都是通过此依赖(*[代码仓库](https://github.com/oklog/run)*) 进行管理的。  
+在`prometheus`中，使用了很多第三方库，为什么要单独说明这个依赖呢？ 因为`prometheus`所有组件`goroutine`都是通过此依赖(*[代码仓库](https://github.com/oklog/run)*) 进行编排管理的。
+
+**代码仓库**
+
+ https://github.com/oklog/run
+
+**原理**
+
+ [github.com/oklog/run](https://github.com/oklog/run)示意图如下
+
+<img src="./src/run执行流程.drawio.png" width="90%" height="0%" alt="offset默认">
+
+**API说明**
+
+- `func (g *Group) Add(execute func() error, interrupt func(error))`
+
+  - 执行函数`execute`：实际需要执行的工作
+  - 退出函数`interrupt`：退出函数`interrupt`进行退出、回收等“善后”工作，
+
+- `func (g *Group) Run() error` 
+
+   为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序可根据错误处理退出、回收资源等“善后”工作。
+
+**补充**
+
+- [Release Party | Ways To Do Things with Peter Bourgon](https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=1376s)
 
 
-下面是`main`函数中一段代码:
+
+
+下面是`prometheus main`函数中一段代码:
 
 ```golang
-  var g run.Group
+ import "github.com/oklog/run"
+
+    
+ var g run.Group
   // ....
     {
     // Scrape discovery manager.
@@ -69,7 +99,22 @@ prometheus
         cancelScrape()
       },
     )
-  }
+   }
+
+   {
+		// Notify discovery manager.
+		g.Add(
+			func() error {
+				err := discoveryManagerNotify.Run()
+				level.Info(logger).Log("msg", "Notify discovery manager stopped")
+				return err
+			},
+			func(err error) {
+				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
+				cancelNotify()
+			},
+		)
+	 }
   // ....
   if err := g.Run(); err != nil {
     level.Error(logger).Log("err", err)
@@ -77,110 +122,14 @@ prometheus
   }
 ```
 
-### `github.com/oklog/run`使用
 
-`github.com/oklog/run` 有两个主要方法:
-
-- `func (g *Group) Add(execute func() error, interrupt func(error))` 有两个参数：  
-  - 注册执行函数`execute`：实际需要执行的工作
-  - 退出函数`interrupt`：退出函数`interrupt`进行退出、回收等“善后”工作
-- `func (g *Group) Run() error` 为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序可根据错误处理退出、回收资源等“善后”工作。
-
-
-**使用示例**  
-
-下面代码运行三个`goroutine`：监听终端信号的协程、`Xtimer1`协程和`Xtimer2`协程打印当前时间。当收到终端信号，关闭所有协程。
-
-```golang
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
-	"github.com/oklog/run"
-)
-
-func main() {
-	term := make(chan os.Signal, 1)
-	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
-
-	var g run.Group
-	time1 := NewXtimer("Xtimer1")
-	time2 := NewXtimer("Xtimer2")
-
-	g.Add(
-		func() error {
-			select {
-			case sig := <-term:
-				fmt.Println("接收到系统信号", sig.String())
-			}
-			return fmt.Errorf("接收到系统信号")
-		},
-		func(err error) {
-			fmt.Println("信号监听关闭")
-		},
-	)
-
-	g.Add(
-		time1.PrintTime, time1.Stop,
-	)
-	g.Add(
-		time2.PrintTime, time2.Stop,
-	)
-	if err := g.Run(); err != nil {
-		os.Exit(1)
-	}
-
-}
-
-type Xtimer struct {
-	Name   string
-	ctx    context.Context
-	cancel context.CancelFunc
-}
-
-func NewXtimer(name string) *Xtimer {
-	ctx, cancel := context.WithCancel(context.TODO())
-	return &Xtimer{
-		Name:   name,
-		ctx:    ctx,
-		cancel: cancel,
-	}
-}
-
-func (t *Xtimer) PrintTime() error {
-	for {
-		select {
-		case <-t.ctx.Done():
-			fmt.Println(t.Name, "退出")
-			return fmt.Errorf("%v stop", t.Name)
-		default:
-			time.Sleep(2 * time.Second)
-			fmt.Println(t.Name, time.Now())
-		}
-	}
-
-}
-
-func (t *Xtimer) Stop(err error) {
-	t.cancel()
-}
-
-```
 
 
 ## main函数执行
 
 ### 执行流程图  
 
-<br/>
-
-`prometheus` 启动流程  
+`prometheus` 启动流程如图
 
 ![main函数执行](./src/prometheus-main-执行.drawio.png)
 
