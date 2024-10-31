@@ -1,7 +1,9 @@
 # 2.4 prometheus启动流程-main函数分析
 
-1. 代码结构
-2. 各模块goroutine的管理(第三方依赖)
+在分析之前，我们需要先解决两个问题：
+
+1. `prometheus`代码目录结构
+2. 各模块goroutine的编排 管理。有赖于第三方依赖 [github.com/oklog/run](https://github.com/oklog/run)
 
 ## 代码的目录结构
 
@@ -19,7 +21,7 @@ prometheus
   │      ├── aws           aws服务发现模块
   │      ├── kubernetes    kubernetes服务发现模块
   │      ...   
-  │      ├── registry.go
+  │      ├── 
   │      ├── discoverer_metrics_noop.go
   │      ├── discovery.go   
   │      ├── manager.go
@@ -28,20 +30,21 @@ prometheus
   │      ├── metrics_refresh.go   
   │      └── util.go   
   ├── model   
-  ├── notifier            notifier 告警模块
-  ├── plugins
-  ├── prompb     
-  ├── promql               promql查询实现
-  ├── rules                规则管理模块
-  ├── scrape               拉取指标等相关
-  ├── storage              存储相关
+  ├── notifier       notifier 告警模块
+  ├── plugins        插件
+  ├── prompb         proto文件
+  ├── promql         promql查询实现
+  ├── rules          规则管理模块。告警规则、记录规则的实现
+  ├── scrape         拉取指标等相关代码
+  ├── storage        存储相关代码。存储代理层
   ├── tracing   
-  ├── tsdb                 tsdb数据库
-  └── util                 工具类
+  ├── tsdb           tsdb数据库
+  ├── web                  
+  │     ├── api      Prometheus API实现，http server   
+  │     └── ui       Prometheus UI界面，前端
+  └── util           工具类
 
 ```
-
-**说明**  
 
 在[项目简述与准备](./项目简述与准备.md)部分，代码编译时会创建两个二进制文件：`prometheus`、`promtool`，这两二进制文件入口函数分别是`cmd/prometheus/main.go`、`cmd/promtool/main.go`。本节的重点就是解析`cmd/prometheus/main.go`执行过程。
 
@@ -54,28 +57,36 @@ prometheus
 
  https://github.com/oklog/run
 
+
+
 **原理**
 
- [github.com/oklog/run](https://github.com/oklog/run)示意图如下
+ [github.com/oklog/run](https://github.com/oklog/run)执行示意图如下
 
-<img src="./src/run执行流程.drawio.png" width="90%" height="0%" alt="offset默认">
+<img src="./src/run执行流程.drawio.png" width="100%" height="100%" alt="offset默认">
+
+
 
 **API说明**
 
 - `func (g *Group) Add(execute func() error, interrupt func(error))`
 
   - 执行函数`execute`：实际需要执行的工作
-  - 退出函数`interrupt`：退出函数`interrupt`进行退出、回收等“善后”工作，
+  - 退出函数`interrupt`：退出函数`interrupt`进行退出、回收等“善后”工作
 
 - `func (g *Group) Run() error` 
 
    为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序可根据错误处理退出、回收资源等“善后”工作。
 
+
+
 **补充**
 
 - [Release Party | Ways To Do Things with Peter Bourgon](https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=1376s)
 
+  
 
+**在prometheus中的应用**
 
 
 下面是`prometheus main`函数中一段代码:
