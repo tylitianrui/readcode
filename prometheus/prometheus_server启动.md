@@ -69,7 +69,6 @@ prometheus
 为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序执行资源回收、关闭网络连接、关闭文件句柄等**收尾**工作
 
 
-
 **demo**
 
 [代码](https://github.com/tylitianrui/readcode/tree/master/prometheus/run_demo)
@@ -90,6 +89,7 @@ import (
 
 func main() {
 	var g run.Group
+  
 	term := make(chan os.Signal, 1)
 	cancel := make(chan struct{})
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
@@ -186,7 +186,7 @@ exit status 1
 
 示意图如下
 
-<img src="./src/run执行流程.drawio.png" width="100%" height="100%" alt="offset默认">
+<img src="./src/run执行流程.drawio.png" width="100%" height="1000%" alt="offset默认">
 
 1. 函数`execute`、函数`interrupt` 都是成对出现的，这一对函数被称为一个`actor`。函数`execute`、函数`interrupt` 是开发者编写的。**编码的时候要求：如果退出函数`interrupt`被调用，那么对应的`execute`函数必须能感知到，并且退出**
 2. `Add`方法会把这一对`actor`函数注册到`Group`类型对象里。`Group`类型对象里维护一个`actor`类型的切片(*注：切片go语言里的可变长数组，非go语言开发者理解为数组即可*)
