@@ -20,23 +20,23 @@ func main() {
 	cancel := make(chan struct{})
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 
-	time1 := NewXtimer("Xtimer1")
-	time2 := NewXtimer("Xtimer2")
+	time1 := NewXtimer("g2")
+	time2 := NewXtimer("g3")
 
 	//
 	g.Add(
 		func() error {
 			select {
 			case sig := <-term:
-				fmt.Println("接收到系统信号", sig.String())
-				return fmt.Errorf("接收到系统信号")
+				fmt.Println("g1接收到系统信号", sig.String())
+				return fmt.Errorf("g1接收到系统信号 退出")
 			case <-cancel:
 				fmt.Println("cancel 有信号了")
 			}
 			return nil
 		},
 		func(err error) {
-			fmt.Println("信号监听关闭")
+			fmt.Println("g1 --interrupt函数执行")
 			close(cancel)
 		},
 	)
@@ -86,4 +86,5 @@ func (t *Xtimer) PrintTime() error {
 
 func (t *Xtimer) Stop(err error) {
 	t.cancel()
+	fmt.Println(t.Name, "--interrupt函数执行")
 }

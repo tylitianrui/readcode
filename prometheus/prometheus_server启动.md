@@ -97,23 +97,23 @@ func main() {
 	cancel := make(chan struct{})
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 
-	time1 := NewXtimer("Xtimer1")
-	time2 := NewXtimer("Xtimer2")
+	time1 := NewXtimer("g2")
+	time2 := NewXtimer("g3")
 
 	//
 	g.Add(
 		func() error {
 			select {
 			case sig := <-term:
-				fmt.Println("接收到系统信号", sig.String())
-				return fmt.Errorf("接收到系统信号")
+				fmt.Println("g1接收到系统信号", sig.String())
+				return fmt.Errorf("g1接收到系统信号 退出")
 			case <-cancel:
 				fmt.Println("cancel 有信号了")
 			}
 			return nil
 		},
 		func(err error) {
-			fmt.Println("信号监听关闭")
+			fmt.Println("g1 --interrupt函数执行")
 			close(cancel)
 		},
 	)
@@ -163,6 +163,7 @@ func (t *Xtimer) PrintTime() error {
 
 func (t *Xtimer) Stop(err error) {
 	t.cancel()
+	fmt.Println(t.Name, "--interrupt函数执行")
 }
 
 ``````
@@ -170,19 +171,18 @@ func (t *Xtimer) Stop(err error) {
 执行结果
 
 ``````text
-Xtimer2 2024-11-02 12:14:02.759489 +0800 CST m=+2.000657248
-Xtimer1 2024-11-02 12:14:02.759512 +0800 CST m=+2.000680708
-Xtimer1 2024-11-02 12:14:04.76093 +0800 CST m=+4.002072784
-Xtimer2 2024-11-02 12:14:04.760911 +0800 CST m=+4.002053130
-Xtimer2 2024-11-02 12:14:06.761721 +0800 CST m=+6.002838050
-Xtimer1 2024-11-02 12:14:06.761756 +0800 CST m=+6.002872550
-^C
-接收到系统信号 interrupt
-信号监听关闭
-Xtimer2 2024-11-02 12:14:08.763017 +0800 CST m=+8.004107385
-Xtimer2 退出
-Xtimer1 2024-11-02 12:14:08.76308 +0800 CST m=+8.004171434
-Xtimer1 退出
+g3 2024-11-02 12:23:39.600744 +0800 CST m=+8.003459771
+g2 2024-11-02 12:23:39.600718 +0800 CST m=+8.003433977
+g2 2024-11-02 12:23:41.601933 +0800 CST m=+10.004617856
+g3 2024-11-02 12:23:41.606175 +0800 CST m=+10.008859959
+^Cg1接收到系统信号 interrupt
+g1 --interrupt函数执行
+g2 --interrupt函数执行
+g3 --interrupt函数执行
+g2 2024-11-02 12:23:43.603218 +0800 CST m=+12.005873143
+g2 退出
+g3 2024-11-02 12:23:43.606833 +0800 CST m=+12.009488438
+g3 退出
 程序退出。。。
 exit status 1
 ``````
