@@ -12,23 +12,28 @@ import (
 )
 
 func main() {
+	//  run.Group
 	var g run.Group
+
 	term := make(chan os.Signal, 1)
+
 	cancel := make(chan struct{})
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 
 	time1 := NewXtimer("Xtimer1")
 	time2 := NewXtimer("Xtimer2")
 
+	//
 	g.Add(
 		func() error {
 			select {
 			case sig := <-term:
 				fmt.Println("接收到系统信号", sig.String())
+				return fmt.Errorf("接收到系统信号")
 			case <-cancel:
 				fmt.Println("cancel 有信号了")
 			}
-			return fmt.Errorf("接收到系统信号")
+			return nil
 		},
 		func(err error) {
 			fmt.Println("信号监听关闭")
@@ -42,7 +47,9 @@ func main() {
 	g.Add(
 		time2.PrintTime, time2.Stop,
 	)
+
 	if err := g.Run(); err != nil {
+		fmt.Println("程序退出。。。")
 		os.Exit(1)
 	}
 
@@ -68,7 +75,6 @@ func (t *Xtimer) PrintTime() error {
 		select {
 		case <-t.ctx.Done():
 			fmt.Println(t.Name, "退出")
-			// return nil
 			return fmt.Errorf("%v stop", t.Name)
 		default:
 			time.Sleep(2 * time.Second)

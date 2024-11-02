@@ -3,7 +3,7 @@
 在分析之前，我们需要先解决两个问题：
 
 1. `prometheus`代码目录结构
-2. 各模块goroutine的编排 管理。有赖于第三方依赖 [github.com/oklog/run](https://github.com/oklog/run)
+2. 各模块`goroutine`的编排 管理。有赖于第三方依赖 [github.com/oklog/run](https://github.com/oklog/run),下文称之为`run`
 
 ## 1. 代码的目录结构
 
@@ -59,15 +59,16 @@ prometheus
 
 #### `func (g *Group) Add(execute func() error, interrupt func(error))` 
 
-将函数`execute`、`interrupt`注到`Group`对象，注册阶段并不会执行`execute`、`interrupt`函数。函数`execute`、`interrupt`是需要开发伙自己去开发的。
+此方法的参数是两个函数:`execute func() error`, `interrupt func(error)`。函数`execute`、`interrupt`是成对出现的，这对函数对称之为`actor`。`Add`方法就是把以个`actor`函数对添加到`Group`对象。添加阶段并不会执行`execute`、`interrupt`函数。
 
-- 函数`execute`：实际需要执行的业务逻辑。
-- 函数`interrupt`：执行资源回收、关闭网络连接、关闭文件句柄等**收尾**工作。
+函数`execute`、`interrupt`是需要开发伙自己去开发的。这两个函数必须满足：
+
+- 函数`execute`：实际需要执行的业务逻辑，必须**同步运行**。
+- 函数`interrupt`：**此函数执行会触发`execute`函数退出**。一般用于最后的**收尾**工作，例如资源回收、关闭网络连接、关闭文件句柄等。
 
 #### `func (g *Group) Run() error`   
 
-为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果有某一个执行函数`execute`报错，所有的退出函数`interrupt`都会接受到这个错误。程序执行资源回收、关闭网络连接、关闭文件句柄等**收尾**工作
-
+为每个执行函数`execute`都开启一个独立的`goroutine`去运行。如果某一个`execute`函数退出并且返回错误，所有的`interrupt`函数都会接受到这个错误。`interrupt`函数执行导致剩余的`execute`函数退出。一般在`interrupt`函数还会有资源回收、关闭网络连接、关闭文件句柄等**收尾**工作。
 
 **demo**
 
@@ -88,24 +89,28 @@ import (
 )
 
 func main() {
+	//  run.Group
 	var g run.Group
-  
+
 	term := make(chan os.Signal, 1)
+
 	cancel := make(chan struct{})
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 
 	time1 := NewXtimer("Xtimer1")
 	time2 := NewXtimer("Xtimer2")
 
+	//
 	g.Add(
 		func() error {
 			select {
 			case sig := <-term:
 				fmt.Println("接收到系统信号", sig.String())
+				return fmt.Errorf("接收到系统信号")
 			case <-cancel:
 				fmt.Println("cancel 有信号了")
 			}
-			return fmt.Errorf("接收到系统信号")
+			return nil
 		},
 		func(err error) {
 			fmt.Println("信号监听关闭")
@@ -119,7 +124,9 @@ func main() {
 	g.Add(
 		time2.PrintTime, time2.Stop,
 	)
+
 	if err := g.Run(); err != nil {
+		fmt.Println("程序退出。。。")
 		os.Exit(1)
 	}
 
@@ -145,7 +152,6 @@ func (t *Xtimer) PrintTime() error {
 		select {
 		case <-t.ctx.Done():
 			fmt.Println(t.Name, "退出")
-			// return nil
 			return fmt.Errorf("%v stop", t.Name)
 		default:
 			time.Sleep(2 * time.Second)
@@ -164,19 +170,20 @@ func (t *Xtimer) Stop(err error) {
 执行结果
 
 ``````text
-Xtimer1 2024-11-01 00:42:47.592574 +0800 CST m=+6.004138239
-Xtimer2 2024-11-01 00:42:47.592623 +0800 CST m=+6.004186926
-Xtimer2 2024-11-01 00:42:49.593881 +0800 CST m=+8.005391548
-Xtimer1 2024-11-01 00:42:49.593924 +0800 CST m=+8.005435090
-Xtimer1 2024-11-01 00:42:51.59523 +0800 CST m=+10.006687255
-Xtimer2 2024-11-01 00:42:51.595305 +0800 CST m=+10.006761822
+Xtimer2 2024-11-02 12:14:02.759489 +0800 CST m=+2.000657248
+Xtimer1 2024-11-02 12:14:02.759512 +0800 CST m=+2.000680708
+Xtimer1 2024-11-02 12:14:04.76093 +0800 CST m=+4.002072784
+Xtimer2 2024-11-02 12:14:04.760911 +0800 CST m=+4.002053130
+Xtimer2 2024-11-02 12:14:06.761721 +0800 CST m=+6.002838050
+Xtimer1 2024-11-02 12:14:06.761756 +0800 CST m=+6.002872550
 ^C
 接收到系统信号 interrupt
 信号监听关闭
-Xtimer1 2024-11-01 00:42:53.596289 +0800 CST m=+12.007691938
-Xtimer2 2024-11-01 00:42:53.59632 +0800 CST m=+12.007723791
+Xtimer2 2024-11-02 12:14:08.763017 +0800 CST m=+8.004107385
 Xtimer2 退出
+Xtimer1 2024-11-02 12:14:08.76308 +0800 CST m=+8.004171434
 Xtimer1 退出
+程序退出。。。
 exit status 1
 ``````
 
