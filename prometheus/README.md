@@ -14,7 +14,8 @@
   - [prometheus功能介绍](prometheus功能介绍.md)
   - [prometheus server中的代码模块](prometheus_server模块.md)
   - [prometheus server启动-main函数分析](prometheus_server启动.md)
-  - [开发基于prometheus client的target](开发基于prometheus_client的target.md)
+  - [开发exporter](开发export.md)
+  - [二开:prometheus热启动](prometheus_hot_relaod.md)
   
 - 第三章：服务发现
   - [服务发现简述与基本配置](discovery简述.md)
