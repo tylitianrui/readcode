@@ -44,21 +44,35 @@ curl -X PUT http://127.0.0.1:9090/-/reload
 
 ## 2. 二开：安全的热更新
 
+###  需求
+
+- 执行`prometheus relaod` 命令进行热更新
+- 执行`prometheus stop` 命令关闭`prometheus`进程
+- 兼容`prometheus`所有命令
 
 
 
+### 方案
 
+`prometheus` 官方版本监听到`HUP`，则进行热更新； 监听到`TERM`信号，则进行关闭。即：
 
+- 热更新
 
+  ``` shell
+  kill   -HUP  <Prometheus PID>
+  ```
 
+- 关闭`prometheus`进程
 
+  ``````shell
+  kill -TERM   <Prometheus PID>
+  ``````
 
+  
 
+我对`prometheus` 进行二开：
 
-
-
-
-
-
-
+- `prometheus` 启动时，在`prometheus.pid`文件里记录`prometheus` 进程号；`prometheus` 退出时，删除`prometheus.pid`
+- 执行`prometheus relaod` ，则 `<Prometheus PID>`发送`HUP`信号
+- 执行`prometheus stop` ，则 `<Prometheus PID>`发送`TERM`信号
 
