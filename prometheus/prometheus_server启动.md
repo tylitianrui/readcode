@@ -74,6 +74,14 @@ prometheus
 
 [代码](https://github.com/tylitianrui/readcode/tree/master/prometheus/run_demo)
 
+说明：
+
+g1 监听系统信号，如果监听到信号则就退出
+
+g2 、g3  每两秒打印一下时间
+
+
+
 ``````go
 package main
 
@@ -100,7 +108,6 @@ func main() {
 	time1 := NewXtimer("g2")
 	time2 := NewXtimer("g3")
 
-	//
 	g.Add(
 		func() error {
 			select {
@@ -175,7 +182,8 @@ g3 2024-11-02 12:23:39.600744 +0800 CST m=+8.003459771
 g2 2024-11-02 12:23:39.600718 +0800 CST m=+8.003433977
 g2 2024-11-02 12:23:41.601933 +0800 CST m=+10.004617856
 g3 2024-11-02 12:23:41.606175 +0800 CST m=+10.008859959
-^Cg1接收到系统信号 interrupt
+^C    ctrl + c
+g1接收到系统信号 interrupt
 g1 --interrupt函数执行
 g2 --interrupt函数执行
 g3 --interrupt函数执行
@@ -210,55 +218,6 @@ exit status 1
 - [Release Party | Ways To Do Things with Peter Bourgon](https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=1376s)
 
   
-
-**在prometheus中的应用**
-
-
-下面是`prometheus main`函数中一段代码:
-
-```golang
- import "github.com/oklog/run"
-
-    
- var g run.Group
-  // ....
-    {
-    // Scrape discovery manager.
-    g.Add(
-      func() error {
-        err := discoveryManagerScrape.Run()
-        level.Info(logger).Log("msg", "Scrape discovery manager stopped")
-        return err
-      },
-      func(err error) {
-        level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
-        cancelScrape()
-      },
-    )
-   }
-
-   {
-		// Notify discovery manager.
-		g.Add(
-			func() error {
-				err := discoveryManagerNotify.Run()
-				level.Info(logger).Log("msg", "Notify discovery manager stopped")
-				return err
-			},
-			func(err error) {
-				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
-				cancelNotify()
-			},
-		)
-	 }
-  // ....
-  if err := g.Run(); err != nil {
-    level.Error(logger).Log("err", err)
-    os.Exit(1)
-  }
-```
-
-
 
 
 ## 3. main函数执行流程分析

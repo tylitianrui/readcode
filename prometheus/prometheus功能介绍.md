@@ -6,10 +6,15 @@
 - 标签处理
 - 指标采集
 - 数据存储
+  - 本地存储
+  - 远端存储
+
 - 查询
 - 告警
 - 规则管理
-
+- `api`
+  - `metrics api` ： `prometheus`作为可被监控的对象时，需要暴露自己的`metrics api`
+  - 查询 `api`: 为第三方服务(例如`grafana`)提供查询指标数据的`API`
 
 ## 服务发现
 
@@ -30,7 +35,7 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9090"]
 ```
-采集对象的地址`127.0.0.1`,端口9090。采集对象暴露的api为`/metrics`。 `Prometheus server`定期请求`127.0.0.1:9090/metrics` 采集目标的数据。 如图: 
+采集对象的地址`127.0.0.1`,端口`9090`。采集对象暴露的`api`为`/metrics`。 `Prometheus server`定期请求`127.0.0.1:9090/metrics` 采集目标的数据。 如图: 
 ![prometheus_static_config](./src/prometheus_static_config.png)
 
 如果监控的服务发生迁移、变更，则需要修改`prometheus`的配置文件并通知`prometheus`从新加载配置文件。
@@ -163,15 +168,6 @@ scrape_configs:
 ```
 每隔`15s`获取请求一次 `127.0.0.1:9090/metrics` 获取监控数据。
 
-那么发的什么样的请求呢？ 我们通过`curl`命令进行呈现
-
-```shell
-curl -X  GET '127.0.0.1:9090/metrics' \
---header 'User-Agent: Prometheus/2.53.0' \
---header 'Accept: application/openmetrics-text;version=1.0.0;q=0.5,application/openmetrics-text;version=0.0.1;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=2' \
---header 'X-Prometheus-Scrape-Timeout-Seconds: 15'
-```
-
 <br>
 可以获取如下数据(截取部分数据)
 
@@ -214,17 +210,9 @@ prometheus_rule_group_duration_seconds{quantile="0.99"} NaN
 prometheus_rule_group_duration_seconds_sum 0
 prometheus_rule_group_duration_seconds_count 0
 
-
 ```
 
-这些数据就是一个个的指标(`Metric`)。 本次我们节选四种类型的指标进行呈现，分别是:
 
-- `prometheus_http_requests_total`，`counter`类型
-- `prometheus_sd_discovered_targets`，`gauge`类型
-- `prometheus_http_response_size_bytes_bucket`，`histogram`类型
-- `prometheus_rule_group_duration_seconds`，`summary`类型
-
-详见[指标类型](./指标类型.md)
 
 
 ## 数据存储  
@@ -237,7 +225,7 @@ prometheus_rule_group_duration_seconds_count 0
 `Prometheus`启动时,可以通过参数来数据路径和保存时间：
 
 - `storage.tsdb.path` 指定数据储存的目录，默认为启动路径的`data`目录 
-- `storage.tsdb.retention` 数据保留时间，默认15天  
+- `storage.tsdb.retention` 数据保留时间，默认`15`天  
 
 例如：`prometheus` tsdb 将数据存储于`/home/tyltr/tsdb/data`，保留7天
 ```
@@ -245,6 +233,14 @@ prometheus_rule_group_duration_seconds_count 0
 ```
 
 `prometheus`本地存储有个很严重的缺点:`Prometheus`自带的`TSDB`是非集群化的数据库，只能存储在本地磁盘。然而机器磁盘空间有限，无法存储大量的监控数据。即便是`TSDB V3` 提升了数据压缩率，但也不能从根本上解决**单节点存储的限制**.为了解决这个问题，`prometheus`提供了**远程读写**的接口，让用户选择合适的时序数据库来实现存储。
+
+
+
+**本地存储的流程示意图**
+
+
+
+![本地存储的流程示意图](./src/本地存储流程示意图.drawio.png)
 
 ### 远程存储
 
@@ -264,7 +260,7 @@ remote_write:
 
 说明:  
 
-- url 用于指定远程写的`http`服务地址,即`Adaptor`的地址。必选配置。
+- `url` 用于指定远程写的`http`服务地址,即`Adaptor`的地址。必选配置。
 
 通过`HTTP`协议,`Prometheus`调用`remote_write.url`接口,将采集到的数据发送给`Adaptor`。`Adaptor`会数据存储在第三方存储里。列举部分实现了远程写的第三方存储： 
 
@@ -276,6 +272,22 @@ remote_write:
 - [OpenTSDB](https://github.com/prometheus/prometheus/tree/main/documentation/examples/remote_storage/remote_storage_adapter)  
 
 详细列表见[Remote Endpoints and Storage](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage)
+
+
+
+**演示**
+
+咱们使用`promethues + grafana +VictoriaMetrics`[演示](./stoarge_remote介绍.md#远程存储配置) 远端存储功能。
+
+
+
+**远端存储的流程示意图**
+
+
+
+![远端存储的流程示意图](./src/远端存储流程示意图 .drawio.png)
+
+
 
 #### 远程读
 
@@ -312,3 +324,20 @@ remote_write:
 
 - `Recording Rule` 记录规则，通过**预先计算经常需要的表达式**或**计算成本高昂的表达式**,将其结果保存为一组新的时间序列.来实现优化查询的目的
 - `Alert Rule` 告警规则，触发告警规则，`Prometheus`就会生成一个警报，发送给`Alertmanager`。
+
+
+
+## API
+
+### 可以被监控
+
+`Prometheus` 提供的`metrics`接口是`/metrics` ,默认端口`9090`   
+
+在流量器打开 [http://127.0.0.1:9090/metrics](http://127.0.0.1:9090/metrics)就可以看到`Prometheus` 的指标信息
+
+
+
+### 指标可查询
+
+见视频演示
+
