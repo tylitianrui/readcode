@@ -86,3 +86,6 @@ curl -X PUT http://127.0.0.1:9090/-/quit
 - 调用`/-/reload` 接口`/-/quit`接口则 返回403 和 禁用信息。
 
  
+### 开发
+
+代码分支[develop/hot_relaod](https://github.com/tylitianrui/prometheus/tree/develop/hot_relaod)
