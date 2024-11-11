@@ -85,7 +85,7 @@ curl -X PUT http://127.0.0.1:9090/-/quit
 - 执行`prometheus stop` ，则读取`prometheus.pid`文件进程号，并且对此进程发送`TERM`信号
 - 调用`/-/reload` 接口`/-/quit`接口则 返回403 和 禁用信息。
 
- 
+
 ### 开发
 
 代码分支[develop/hot_relaod](https://github.com/tylitianrui/prometheus/tree/develop/hot_relaod)
