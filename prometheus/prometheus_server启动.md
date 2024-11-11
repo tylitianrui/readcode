@@ -222,23 +222,27 @@ exit status 1
 
 ## 3. main函数执行流程分析
 
+`prometheus`的`main函数`中有12个使用[`run`](https://github.com/oklog/run)管理的代码模块，分别是:`Termination handler`、`Scrape discovery manager`、`Notify discovery manager`、`Web handler`、`TSDB`、`WAL storage` 、`Initial configuration`模块、`Scrape manager`、`Tracing manager`、`Notifier`、`Rule manager`、`Reload handler`。
+
+执行流程：
+
+1. 设置启动参数，解析参数
+2. 根据启动参数`config.file`获取配置文件，校验配置文件的配置
+3. 配置文件验证通过，使用第三方库[`run`](https://github.com/oklog/run)  开启各个代码模块：
+   - 开启 `Termination handler` 监听系统信号，如接收到`TERM`信号，则`prometheus` 退出
+   - 开启 `Scrape discovery manager`，对被监控对象`target`进行服务发现。将获取到的地址发送到自身的`chan`,供`Scrape manager`模块获取
+   - 开启 `Notify discovery manager`，对告警服务进行服务发现，获取`AlterManager`地址。将获取到的`AlterManager`地址发送到自身的`chan`,供`Scrape manager`模块获取
+   - 开启 `Web handler`模块
+   - 如果是代理模式，开启`WAL storage` 模块；如果不是代理模式，启动`TSDB`
+   - 开启`WAL storage` 模块或者`TSDB`之后，加载配置文件`config.file`内容
+   - 加载配置文件`config.file`之后：
+     - 启动`Scrape manager`模块，`Scrape manager`启动后，监听服务发现的`chan`,获取最新的被监控对象的地址，拉取监控指标。
+     - 启动`Notifier`模块，`Notifier`启动后，监听 `Notify discovery manager`的`chan`,获取`AlterManager`的地址，以备发送告警使用。
+     - 启动`Tracing manager`  链路追踪，目前是实验性的组件
+     - 启动`Reload handler`  监听系统信号,，如接收到`HUP`信号，则`prometheus` 重新加载配置文件。
+     - 如果不是代理模式，开启`Notifier`、`Rule manager`模块，否则不开启。
+
 ### 执行流程图  
-
-
-
-`prometheus` 启动流程如图
 
 ![main函数执行](./src/prometheus-main-执行.drawio.png)
 
-
-`prometheus` 流程说明： 
-
-- `Agent`模式:  目前最流行的全局视图解决方案就是远程写入`Remote Write`。`Agent`模式优化了远程写入方案。`prometheus` 在`Agent`模式下,**查询**、**告警(`Rule manager`、`Notifier`)**和**本地存储(`Rule manager`、`TSDB`)**是被禁用的，开启`TSDB WAL`功能；其他功能保持不变:**抓取逻辑**、**服务发现**等。 详见[**Agent模式**](./代理模式.md)
-- `Scrape discovery manager`负责服务发现，会不断获取当前最新的服务地址、数量等信息；
-- `Scrape manager`组件会通过`Scrape discovery manager`组件获取的服务节点信息，更新需要采集的`targets`，进行采集指标
-- `Rule manager`:`prometheus`进行规则管理的组件。分为两类规则：
-  - `RecordingRule` 表达式规则，用于记录到tsdb;
-  - `AlertingRule`  告警规则,触发告警
-- `Notifier`：用于向 `Alertmanager` 发送告警通知
-- `Termination handler`: 监听信号`os.Interrupt`(注：`ctrl+c`，`kill -2 p<prometheus pid>` )、`syscall.SIGTERM`(注：`kill -15  <prometheus pid>`),则优雅地退出`prometheus`进程。
-- `Reload handler`: 监听信号`syscall.SIGHUP`(注：`kill -HUP  <prometheus pid>`，`kill -1  <prometheus pid>` ),则重新加载配置文件。
