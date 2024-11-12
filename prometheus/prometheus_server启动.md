@@ -199,7 +199,7 @@ exit status 1
 
 ### **代码执行原理**
 
-示意图如下
+示意图如下 
 
 <img src="./src/run执行流程.drawio.png" width="100%" height="1000%" alt="offset默认">
 
@@ -209,11 +209,13 @@ exit status 1
    1. 创建一个容量`chan error` ,容量与`actor`切片长度相等。
    2. 为每个函数`execute`都开启一个独立的`goroutine`去运行。如果某一个函数`execute`执行报错，错误就会被发送到`chan error` 
    3. 监听`chan error`。如果没有监听到错误，程序被阻塞；如果监听到错误，程序退出阻塞状态，执行后续的退出逻辑。
-   4.  如果接收的error 是从`chan error`里接收的第一个`error`,遍历执行所有的`interrupt` 函数；
+   4. 如果接收的error 是从`chan error`里接收的第一个`error`,遍历执行所有的`interrupt` 函数；
    5. `interrupt` 函数执行，对应的函数`execute`就会退出。函数`execute`退出时会向`chan error` 发生一个`error`类型的数据。退出逻辑接收到所有函数`execute`退出时的error，则认为函数`execute`全部退出。
-   6. 程序关闭
+   6. 程序关闭  
 
-**补充**
+**补充**            
+
+- actor     errgroup
 
 - [Release Party | Ways To Do Things with Peter Bourgon](https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=1376s)
 
@@ -222,7 +224,7 @@ exit status 1
 
 ## 3. main函数执行流程分析
 
-`prometheus`的`main函数`中有12个使用[`run`](https://github.com/oklog/run)管理的代码模块，分别是:`Termination handler`、`Scrape discovery manager`、`Notify discovery manager`、`Web handler`、`TSDB`、`WAL storage` 、`Initial configuration`模块、`Scrape manager`、`Tracing manager`、`Notifier`、`Rule manager`、`Reload handler`。
+`prometheus`的`main函数`中有12个代码模块使用[`run`](https://github.com/oklog/run)管理的，分别是:`Termination handler`、`Scrape discovery manager`、`Notify discovery manager`、`Web handler`、`TSDB`、`WAL storage` 、`Initial configuration`模块、`Scrape manager`、`Tracing manager`、`Notifier`、`Rule manager`、`Reload handler`。
 
 执行流程：
 
