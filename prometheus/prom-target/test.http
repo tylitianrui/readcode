@@ -14,7 +14,7 @@ Cache-Control: {{noCache}}
 
 
 #### code  200
-GET  /ping/tyltr
+GET  /ping/111
 Host: {{host}}
 Content-Type: {{contentType}}
 Cache-Control: {{noCache}}
