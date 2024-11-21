@@ -22,18 +22,50 @@
 说明：
 
 - 每个时间序列由指标名称(`metric name`)以及一组标签（可选的键值对）唯一标识。
+
 - 指标名称(`metric name`)：反映被监控的样本, 例如`prometheus_http_requests_total`表示 `Prometheus`接收到的`HTTP`请求数量; 
+
 - 指标名称(`metric name`)命名必须满足如下规则：
+  
   - **见名知义**
   - 指标名称必须有字母、数字、下划线或者冒号组成
   - 不能以数字开头，也就是说必须满足`[a-zA-Z_:][a-zA-Z0-9_:]*`
   - 冒号`:`不得使用于`exporter`    注：冒号专门用来表示用户自定义的记录规则，不能在exporter或监控对象直接暴露的指标中使用冒号来表示指标名称。
+  
 - 标签(`label`)反映样本的特征维度,通过这些维度`Prometheus`可以对样本数据进行过滤，聚合等.标签命名必须满足如下规则：
   - 标签名称必须有字母、数字、下划线或者冒号组成
+  
   - 标签名称不能以数字开头，也就是说必须满足`[a-zA-Z_][a-zA-Z0-9_]*`
+  
   - 前缀为`__`标签，是为系统内部使用而预留的。
+  
+    
 
-注：`Prometheus`拉取到的指标(`Metric`)形式都是` <metric name>{<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} `的。但在存储上，指标名称(`metric name`)将会以`__name__=<metric name>`的形式保存在数据库中的.例如`prometheus_http_requests_total{code="200",handler="/"}`① 会被转换成 `{__name__ = "prometheus_http_requests_total", code="200",handler="/"}`②。所以①、②是同一时序的不同表示而已。
+> [!TIP]
+>
+> `Prometheus`拉取到的指标(`Metric`)形式都是
+>
+> ```
+>  <metric name>{<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} 
+> ```
+>
+> 但在数据库中，指标名称(`metric name`)将会以`__name__=<metric name>`的形式存储的。
+>
+> ```
+> {__name__=<metric name>,<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} 
+> ```
+>
+> 是同一个时序的不同表示而已。
+>
+> 
+>
+> 例如： `metric`接口获取的指标`prometheus_http_requests_total{code="200",handler="/"}`会被转换成 `{__name__ = "prometheus_http_requests_total", code="200",handler="/"}`存储在数据库中。
+>
+> 
+
+
+
+
 
 
 
