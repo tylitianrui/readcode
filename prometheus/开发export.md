@@ -2,8 +2,8 @@
 
 本节的目标：
 
-- 了解`Metric`以及`Metric`计数的数学原理
-- 具有完全的开发`exporter`的能力
+- 了解`Metric`以及`Metric`数值统计的数学原理
+- 具有完全开发`exporter`的能力
 
 
 
@@ -13,7 +13,7 @@
 
 ### 1.1 指标(`Metric`)定义
 
-`Prometheus`的指标(`Metric`)被统一定义为： 
+每个时间序列由指标名称(`metric name`)以及一组标签（可选的键值对）唯一标识。`Prometheus`的指标(`Metric`)被统一定义为： 
 
 ```
 <metric name>{<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} 
@@ -21,24 +21,21 @@
 
 说明：
 
-- 每个时间序列由指标名称(`metric name`)以及一组标签（可选的键值对）唯一标识。
-
 - 指标名称(`metric name`)：反映被监控的样本, 例如`prometheus_http_requests_total`表示 `Prometheus`接收到的`HTTP`请求数量; 
 
 - 指标名称(`metric name`)命名必须满足如下规则：
-  
-  - **见名知义**
+
   - 指标名称必须有字母、数字、下划线或者冒号组成
   - 不能以数字开头，也就是说必须满足`[a-zA-Z_:][a-zA-Z0-9_:]*`
   - 冒号`:`不得使用于`exporter`    注：冒号专门用来表示用户自定义的记录规则，不能在exporter或监控对象直接暴露的指标中使用冒号来表示指标名称。
-  
+
 - 标签(`label`)反映样本的特征维度,通过这些维度`Prometheus`可以对样本数据进行过滤，聚合等.标签命名必须满足如下规则：
   - 标签名称必须有字母、数字、下划线或者冒号组成
-  
+
   - 标签名称不能以数字开头，也就是说必须满足`[a-zA-Z_][a-zA-Z0-9_]*`
-  
+
   - 前缀为`__`标签，是为系统内部使用而预留的。
-  
+
     
 
 > [!TIP]
@@ -65,10 +62,6 @@
 
 
 
-
-
-
-
 ### 1.2 指标(`Metric`)类型
 
 `Prometheus`采集到的`Metric`类型有四种：`Counter`、`Gauge`、`Histogram`、`Summary`。  
@@ -79,7 +72,7 @@ Counter(计数器类型): 一般用于累计值，**只增不减**，例如记�
 例如: 接口`/metrics`，状态码为`200`的请求次数
 
 ```text
-  prometheus_http_requests_total{code="200",handler="/metrics"} 851
+prometheus_http_requests_total{code="200",handler="/metrics"}    851
 ```
 
 展示：  
@@ -134,7 +127,7 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 
 ##### prometheus中的直方图
 
-`prometheus`中的`直方图`(或`柱状图`)与数学的`直方图`(或`柱状图`)进行了"**优化**"。
+`prometheus`中的`直方图`(或`柱状图`)与数学的`直方图`(或`柱状图`)进行了"**优化**"：**累加直方图**
 
 
 
@@ -145,6 +138,44 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 - 数学直方图区间对应的就是`prometheus`中的`直方图`的桶，也就是`bucket`。每个桶的值是**小于或等于**桶的上限的数据之和。例如本次考试`成绩<= 60` 有`5`人，`60<成绩<=70`有`16`人，`70<成绩<=80`有`19`人；那么桶`60~70`部分就是`5+16=21` ,桶`70~80`部分就是`5+16+19=40`
 - 查询多个区间数据不再需要加法运算，例如计算小于`90`分的人数直接获取`53`
 - `prometheus`中的直方图是时间序列，时间序列本身是**累积**的。类比此例，就是本次考试成绩会计入下一次考试中。
+
+
+
+#####  累加直方图有什么好处？
+
+###### 分位数计算简单
+
+分位数：对一批数据进行排序之后，排在`p%`位置的数值大小。例如：有100个数字，按照从小到大的顺序排列，`P75`就是第`75`位置上的数、`P90`就是第`90`位置上的数。上面一模成绩而言，`P90` 应该是顺序在`51`( 即： *`57 * 90%  ≈ 51`* )位置上的分数 。
+
+如果使用数学直方图 找第`51`位置上的分数。
+
+- [0 , 60]       5人                                            5   <  51
+- [0, 70]        5 + 16 = 21人                           21  < 51
+- [0, 70]        5 + 16  + 19 =  40人                40  < 51
+- [0, 80]        5 + 16  + 19  + 13 =  53人      53   > 51          ====>       排序第`51`位置上的分数在`(70, 80]`区间。
+
+如果使用prometheus直方图 找第`51`位置上的分数。
+
+- [0 , 60]       5人            5   <  51
+- [0, 70]        21人         21  < 51
+- [0, 70]        40人         40  < 51
+- [0, 80]        53人          53   > 51          ====>       排序第`51`位置上的分数在` (70, 80]`区间。
+
+使用`prometheus`直方图 查找分位数无需进行**累加**计算。
+
+
+
+######  压缩
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -292,14 +323,6 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 
 
 
-
-
-
-
-
-
-
-
 `prometheus`中的直方图格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
 
 直方图指标由三个部分：
@@ -313,16 +336,16 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 **例如**：下例截取自`prometheus`的监控数据，此为`prometheus`调用`/metrics`接口的耗时。
 
 ```
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.1"} 727
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.2"} 727
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.4"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="1"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="3"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="8"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="20"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="60"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="120"} 728
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="+Inf"} 728
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.1"} 210
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.2"} 250
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.4"} 255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="1"}  255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="3"} 255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="8"} 255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="20"} 255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="60"} 255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="120"} 255
+prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="+Inf"} 255
 prometheus_http_request_duration_seconds_sum{handler="/metrics"} 58.465142
 prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 ```
@@ -332,10 +355,6 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 展示   
 
 ![prometheus_http_request_duration_seconds_bucket](./src/prometheus_http_request_duration_seconds_bucket.png " prometheus_http_request_duration_seconds_bucket")
-
-
-
-##### 区间划分
 
 
 
