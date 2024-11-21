@@ -1,23 +1,9 @@
-# 2.5 开发export
+# 2.5 开发exporter
 
-本节目录
+本节的目标：
 
-- 1.指标(`Metric`)
-
-  - 1.1 指标(`Metric`)定义
-
-  - 1.2 指标(`Metric`)类型
-    - 1.2.1 Counter(计数器类型)
-    - 1.2.2 Gauge(仪表盘类型)
-    - 1.2.3 Histogram(直方图类型) 
-      - 1.2.3.1  `prometheus`的直方图与数学的直方图对比
-      - 1.2.3.2 直方图的误差
-    - 1.2.4 Summary(摘要类型)
-
-- 2.开发export
-
-  - 2.1 开发一个全新的export
-  - 2.2  二开node export
+- 了解`Metric`以及`Metric`计数的数学原理
+- 具有完全的开发`exporter`的能力
 
 
 
@@ -85,6 +71,16 @@ go_memstats_alloc_bytes 2.1667616e+07
 
 #### 1.2.3 Histogram(直方图类型) 
 
+官方说明
+
+``````text
+A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets. It also provides a sum of all observed values.
+
+Histogram(直方图类型):表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小），并能够对其指定区间以及总数进行统计。
+``````
+
+
+
 #####  数学中的直方图
 
 直方图本质就是柱状图。先回顾一下数学中的柱状图。例如统计一个班级学生的两次成绩分布情况                                          
@@ -93,8 +89,8 @@ go_memstats_alloc_bytes 2.1667616e+07
 
 **要素**
 
-- 每次采样的样本数都是 `57`，例如:一模中 `张三 73分`、`李四 46分`、`王五 91分`、.....  每个都是一个样本，一模成绩需要采集这`57`个样本。同样二模也是采集`57`个样本
-- 区间划分  
+- **采样次数** 每次统计的样本数都是 `57`，例如:一模中 `张三 73分`、`李四 46分`、`王五 91分`、.....  每个都是一个样本，一模成绩需要采样`57`个次。同样二模也需要采样`57`个次。
+- **区间划分 **
   - 上图中区间划分为   `分数 <=60` 、 `60< 分数 <=70`、 `70< 分数 <=80`、 `80< 分数 <=90`、`90<分数 <=100`;
   - 每个区间仅统计当前区间的数据量，例如一模考试中，`70~80`之间的有`19`人;
   - 查询多个区间数据需要进行加法运算，例如计算一模考试中 小于`90`分的人数`5+16+19+13=53`
@@ -113,34 +109,38 @@ go_memstats_alloc_bytes 2.1667616e+07
 
 说明：
 
-- 每个桶的值是**小于或等于**桶的上限的数据之和。例如本次考试`<= 60` 有`5`人，`60<成绩<=70`有`16`人，`70<成绩<=80`有`19`人；那么桶`60~70`部分就是`5+16=21` ,桶`70~80`部分就是`5+16+19=40`
+- 数学直方图区间对应的就是`prometheus`中的`直方图`的桶，也就是`bucket`。每个桶的值是**小于或等于**桶的上限的数据之和。例如本次考试`成绩<= 60` 有`5`人，`60<成绩<=70`有`16`人，`70<成绩<=80`有`19`人；那么桶`60~70`部分就是`5+16=21` ,桶`70~80`部分就是`5+16+19=40`
 - 查询多个区间数据不再需要加法运算，例如计算小于`90`分的人数直接获取`53`
 - `prometheus`中的直方图是时间序列，时间序列本身是**累积**的。类比此例，就是本次考试成绩会计入下一次考试中。
 
 
 
-计算方式：
+**计算方式**
 
 <table>
   <capital>统计流程</capital>
   <tr>
     <th>成绩采样</th>
     <th rowspan=2 > prometheus <br>直方图初始数据 </th>
-    <th colspan=2 > 张三/73/一模 </th>
-    <th colspan=2> 李四/46/一模 </th>
-    <th colspan=2> 王五/91/一模 </th>
-    <th colspan=2> 张三/69/二模 </th>
+    <th colspan=3 > 张三/73/一模 </th>
+    <th colspan=3> 李四/46/一模 </th>
+    <th colspan=3> 王五/91/一模 </th>
+    <th colspan=3> 张三/69/二模 </th>
     <th > ...</th>
   </tr>
   <tr>
     <th>区间</th>
     <th >采样</th>
+    <th >数学直方图</th>
     <th >prometheus直方图</th>
     <th >采样</th>
+    <th >数学直方图</th>
     <th >prometheus直方图</th>
     <th >采样</th>
+    <th >数学直方图</th>
     <th >prometheus直方图</th>
     <th >采样</th>
+    <th >数学直方图</th>
     <th >prometheus直方图</th>
     <th ></th>
   </tr>
@@ -149,11 +149,15 @@ go_memstats_alloc_bytes 2.1667616e+07
     <td >0</td>
     <td >0</td>
     <td >0</td>
+    <td >0</td>
+    <td >1</td>
     <td >1</td>
     <td >1</td>
     <td >0</td>
     <td >1</td>
+    <td >1</td>
     <td >0</td>
+    <td >1</td>
     <td >1</td>
     <td ></td>
   </tr>
@@ -163,10 +167,14 @@ go_memstats_alloc_bytes 2.1667616e+07
     <td >0</td>
     <td >0</td>
     <td >0</td>
-    <td >1</td>
+    <td >0</td>
     <td >0</td>
     <td >1</td>
+    <td >0</td>
+        <td >0</td>
     <td >1</td>
+    <td >1</td>
+        <td >1</td>
     <td >2</td>
     <td ></td>
   </tr>
@@ -175,11 +183,15 @@ go_memstats_alloc_bytes 2.1667616e+07
     <td >0</td>
     <td >1</td>
     <td >1</td>
+    <td >1</td>
     <td >0</td>
+    <td >1</td>
     <td >2</td>
     <td >0</td>
+    <td >1</td>
     <td >2</td>
     <td >0</td>
+    <td >1</td>
     <td >3</td>
     <td ></td>
   </tr>
@@ -187,12 +199,16 @@ go_memstats_alloc_bytes 2.1667616e+07
     <th>80< 分数 <=90</th>
     <td >0</td>
     <td >0</td>
+    <td >0</td>
     <td >1</td>
     <td >0</td>
+        <td >0</td>
     <td >2</td>
     <td >0</td>
+        <td >0</td>
     <td >2</td>
     <td >0</td>
+        <td >0</td>
     <td >3</td>
     <td ></td>
   </tr>
@@ -200,12 +216,16 @@ go_memstats_alloc_bytes 2.1667616e+07
     <th>90< 分数 <=100</th>
     <td >0</td>
     <td >0</td>
+        <td >0</td>
     <td >1</td>
     <td >0</td>
+        <td >0</td>
     <td >2</td>
     <td >1</td>
+        <td >1</td>
     <td >3</td>
     <td >0</td>
+        <td >1</td>
     <td >4</td>
     <td ></td>
   </tr>
@@ -214,40 +234,46 @@ go_memstats_alloc_bytes 2.1667616e+07
     <td >0</td>
     <td >-</td>
     <td >73</td>
+        <td >73</td>
     <td >-</td>
     <td >73+46=119</td>
+    <td >73+46=119</td>
     <td >-</td>
-    <td >73+46 + 91=210</td>
+    <td >73+46+91=210</td>
+    <td >73+46+91=210</td>
     <td >-</td>
-    <td >73+ 46 + 91 + 69 = 279</td>
+    <td >73+46+91+69=279</td>
+    <td >73+46+91+69=279</td>
     <td >-</td>
   </tr>
     <tr>
     <th> 采样次数 </th>
     <td >0</td>
-    <td >1</td>
-    <td >1</td>
-    <td >2</td>
-    <td >2</td>
-    <td >3</td>
-    <td >3</td>
-    <td >4</td>
-    <td >4</td>
+    <td colspan=3 >1</td>
+    <td colspan=3 >2</td>
+    <td colspan=3 >3</td>
+    <td colspan=3 >4</td>
     <td ></td>
   </tr>
-
 </table>
 
 
-`Histogram`(直方图类型):表示**一段时间范围**内对数据进行采样（*通常是请求持续时间或响应大小*），并能够对其**指定区间**以及**总数**进行统计。
 
-格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
+
+
+
+
+
+
+
+
+`prometheus`中的直方图格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
 
 直方图指标由三个部分：
 
-- 采样次数，类型`Counter`，指标名称以`_count`结尾。
-- 所有测量值之和,类型`Counter`，指标名称以`_sum`结尾。
-- 一组直方图的桶，指标名称以`_bucket`结尾，标签包含`le`。
+- 采样次数，**累加的**，指标名称以`_count`结尾。
+- 所有测量值之和,**累加的**，指标名称以`_sum`结尾。
+- 一组直方图的桶，指标名称以`_bucket`结尾，标签包含`le`。每一个桶的数据是**累加的**。
 
 
 
@@ -276,7 +302,11 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 
 
 
-##### 1.2.3.2 直方图的误差
+##### 区间划分
+
+
+
+#####  直方图的误差
 
 在实际工作中`prometheus`指标数据是定期采集的，在时间上都是离散的；样本数据也是划分区间的，例如直方图统计小于等于某值的数量和，而不是把所有的数据枚举值都记录下来。所以`prometheus`根据采集的数据会估算其他时刻或者其他数据的状态。虽然是估算，但**误差**必须足够小。
 
