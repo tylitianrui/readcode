@@ -1,11 +1,10 @@
-# 2.5 开发exporter
+# 2.5 指标以及数学原理
 
 本节的目标：
 
 - 了解`Metric`以及`Metric`数值统计的数学原理
-- 具有完全开发`exporter`的能力
 
-
+  
 
 ## 1.指标(`Metric`)
 
@@ -127,7 +126,9 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 
 ##### prometheus中的直方图
 
-`prometheus`中的`直方图`(或`柱状图`)与数学的`直方图`(或`柱状图`)进行了"**优化**"：**累加直方图**
+`prometheus`中的`直方图`(或`柱状图`)与数学的`直方图`(或`柱状图`)进行了"**优化**"：**累加直方图**  
+
+注： 累加直方图数学定义 https://en.wikipedia.org/wiki/Histogram#Cumulative_histogram
 
 
 
@@ -284,6 +285,27 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 </table>
 
 
+为了方便理解，咱们把数学中的直方图作为中间计算过程。如果真是采用这种运算方式，太复杂了。那么怎么运算呢？
+
+``````text
+分数<=60               
+
+60<分数<=70
+
+70<分数<=80
+
+80<分数<=90
+
+90<分数<=100
+
+总成绩
+
+采样数量
+``````
+
+
+
+
 
 `prometheus`中的直方图格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
 
@@ -324,7 +346,7 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 
 ###### 分位数计算简单
 
-分位数：对一批数据进行排序之后，排在`p%`位置的数值大小。例如：有100个数字，按照从小到大的顺序排列，`P75`就是第`75`位置上的数、`P90`就是第`90`位置上的数。上面一模成绩而言，`P90` 应该是顺序在`51`( 即： *`57 * 90%  ≈ 51`* )位置上的分数 。
+分位数：对一批数据进行排序之后，排在`p%`位置的数值大小。例如：有`100`个数字，按照从小到大的顺序排列，`P75`就是第`75`位置上的数、`P90`就是第`90`位置上的数。上面一模成绩而言，`P90` 应该是顺序在`51`( 即： *`57 * 90%  ≈ 51`* )位置上的分数 。
 
 如果使用数学直方图 找第`51`位置上的分数。
 
@@ -356,13 +378,24 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 >
 >    综上：估算公式  `bucketStart + (bucketEnd-bucketStart)*float64(rank/count)`    
 >
->    -  `rank`    分位数在当前`bucket`中是第几位  
+>    -  `rank`     分位数在当前`bucket`中是第几位  
 >    - `count`   当前`bucket`中的样本数量。
 >    - `bucketStart`、` bucketEnd`  表示当前`bucket`的开始边界、结束边。
 >
 > 
 >
-> 既然是估算，那么一定是存在误差的。`prometheus`直方图要做的就是尽量减少误差，以确保精确。误差过大就没有意义了
+> 既然是估算，那么一定是存在误差的。prometheus`直方图要做的就是尽量减少误差，以确保精确。
+
+
+
+补充文档：
+
+- 分位数误差     https://prometheus.io/docs/practices/histograms/#errors-of-quantile-estimation
+- histogram_quantile函数  https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile
+
+
+
+
 
 
 
@@ -405,20 +438,6 @@ go_gc_duration_seconds_count 10
 ![go_gc_duration_seconds](./src/go_gc_duration_seconds.png " go_gc_duration_seconds")
 
 
-
-
-
-## 2. 开发export
-
-### 2.1 开发一个全新的export 
-
-代码见[代码](./prom-target/README.md)
-
-
-
-
-
-### 2.2  二开node export
 
 
 
