@@ -2,23 +2,27 @@
 
 本节的目标：
 
-- 了解`Metric`以及`Metric`数值统计的数学原理
+- 了解`Metrics`：`Metrics`四种类型以及各自的行为、应用场景
+
+- 了解`Metric`背后的数学原理
 
   
 
 ## 1.指标(`Metric`)
 
-`prometheus` 的指标数据由`target`服务提供的。`prometheus`服务器定时从`target`服务上收集这些指标。在开发` prometheus exporter`之前，先介绍一下指标。
+`prometheus` 的指标数据由`target`服务提供的。`prometheus`服务器定时从`target`服务上收集这些指标。
 
-### 1.1 指标(`Metric`)定义
+### 1.1 指标(`Metric`)结构
 
-每个时间序列由指标名称(`metric name`)以及一组标签（可选的键值对）唯一标识。`Prometheus`的指标(`Metric`)被统一定义为： 
+`Prometheus`的指标(`Metric`)结构： 
 
 ```
 <metric name>{<label_name_1>=<label_value_1>,<label_name_2>=<label_value_2>,...} 
 ```
 
 说明：
+
+- 每个时间序列由指标名称(`metric name`)以及一组标签（可选的键值对）唯一标识
 
 - 指标名称(`metric name`)：反映被监控的样本, 例如`prometheus_http_requests_total`表示 `Prometheus`接收到的`HTTP`请求数量; 
 
@@ -317,28 +321,33 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 
 
 
-**例如**：下例截取自`prometheus`的监控数据，此为`prometheus`调用`/metrics`接口的耗时。
+**例如**：下例截取自`prometheus`的监控数据，`go_sched_latencies_seconds_bucket`此为`prometheus`项目里`goroutine`等待执行的时间。
 
-```
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.1"} 210
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.2"} 250
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="0.4"} 255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="1"}  255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="3"} 255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="8"} 255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="20"} 255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="60"} 255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="120"} 255
-prometheus_http_request_duration_seconds_bucket{handler="/metrics",le="+Inf"} 255
-prometheus_http_request_duration_seconds_sum{handler="/metrics"} 58.465142
-prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
+```text
+# HELP go_sched_latencies_seconds Distribution of the time goroutines have spent in the scheduler in a runnable state before actually running. Bucket counts increase monotonically.
+# TYPE go_sched_latencies_seconds histogram
+go_sched_latencies_seconds_bucket{le="6.399999999999999e-08"} 486
+go_sched_latencies_seconds_bucket{le="6.399999999999999e-07"} 780
+go_sched_latencies_seconds_bucket{le="7.167999999999999e-06"} 995
+go_sched_latencies_seconds_bucket{le="8.191999999999999e-05"} 1143
+go_sched_latencies_seconds_bucket{le="0.0009175039999999999"} 1196
+go_sched_latencies_seconds_bucket{le="0.010485759999999998"} 1203
+go_sched_latencies_seconds_bucket{le="0.11744051199999998"} 1203
+go_sched_latencies_seconds_bucket{le="+Inf"} 1203
+go_sched_latencies_seconds_sum 0.011981568
+go_sched_latencies_seconds_count 1203
 ```
 
-说明：`request_time <= 0.1s`的请求数 `727`，`request_time <= 0.4s`的请求数 `728`。  
+说明：
+
+- 一共统计 `1203` 次，所有`goroutine`累计等待时长`0.011981568s`
+
+- `等待时间 <= 6.399999999999999e-08s`的`goroutine`有 `486`个
+- `等待时间 <= 6.399999999999999e-07s`的`goroutine`有 `780`个 ....
 
 展示   
 
-![prometheus_http_request_duration_seconds_bucket](./src/prometheus_http_request_duration_seconds_bucket.png " prometheus_http_request_duration_seconds_bucket")
+![go_sched_latencies_seconds_bucket](./src/go_sched_latencies_seconds_bucket_.png " prometheus_http_request_duration_seconds_bucket")
 
 
 
