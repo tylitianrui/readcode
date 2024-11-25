@@ -46,6 +46,15 @@ var (
 		},
 		[]string{"path"},
 	)
+	respDurations = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "pond_temperature_celsius",
+			Help:       "The temperature of the frog pond.",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+
+		[]string{"path"},
+	)
 )
 
 // 初始化prometheus收集器
@@ -86,7 +95,8 @@ func PrometheusRequestLatency(c *gin.Context) {
 	c.Next()
 	duration := (time.Now().UnixNano() - start) / (1000 * 1000)
 
-	respDuration.WithLabelValues(path).Observe(float64(duration))
+	a := respDuration.WithLabelValues(path)
+	a.Observe(float64(duration))
 
 }
 

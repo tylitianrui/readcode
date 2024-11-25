@@ -307,7 +307,7 @@ Histogram(直方图类型):表示一段时间范围内对数据进行采样（�
 
 
 
-`prometheus`中的直方图格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。*
+`prometheus`中的直方图格式`xxxx_bucket{le="<数值>"[,其他标签]} <数值>`，*注：`le`是**向上包含**的,即**小于等于**。
 
 直方图指标由三个部分：
 
@@ -384,7 +384,7 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 >
 > 
 >
-> 既然是估算，那么一定是存在误差的。prometheus`直方图要做的就是尽量减少误差，以确保精确。
+> 既然是估算，那么一定是存在**误差**的。prometheus直方图要做的就是尽量减少误差，以确保精确。
 
 
 
@@ -395,23 +395,26 @@ prometheus_http_request_duration_seconds_count{handler="/metrics"} 728
 
 
 
+#### 1.2.4 Summary
 
+官方说明[Summary](https://prometheus.io/docs/concepts/metric_types/#summary)
 
+```
+Similar to a histogram, a summary samples observations (usually things like request durations and response sizes). While it also provides a total count of observations and a sum of all observed values, it calculates configurable quantiles over a sliding time window.
 
+Summary(摘要类型):表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小)，并能够对其指定比例以及总数进行统计。
 
-#### 1.2.4 Summary(摘要类型)
+```
 
-`Summary`(摘要类型):表示一段时间范围内对数据进行采样（*通常是请求持续时间或响应大小*)，并能够对其**指定比例**以及**总数**进行统计。格式`xxxx{quantile="<φ>"[,其他标签]} <数值>`，`quantile`百分比，即**分位数**
+**客户端**对**一段时间内**（默认的最长时间是`10 分钟`）的每个采样点进行统计，并形成分位图。格式`xxxx{quantile="<φ>"[,其他标签]} <数值>`，quantile**分位数**
+
 
 `Summary`指标由三个部分：
 
-- 观测对象发生的次数，类型`Counter`，指标名称以`_count`结尾。
-- 所有测量值之和,类型`Counter`，指标名称以`_sum`结尾。
-- 一组**分位数**数据，指标标签包含`quantile`，即：中位数(`quantile="0.5"`)、`9`分位(`quantile="0.9"`)
+- 一组**分位数**数据，指标标签包含`quantile`，即：中位数(`quantile="0.5"`)、`7.5`分位(`quantile="0.75"`)
+- 观测对象发生的次数，指标名称以`_count`结尾。
+- 所有测量值之和,指标名称以`_sum`结尾。
 
-> 注：分位数，指将一个随机变量的概率分布范围分为几个等份的数值点。
->
-> 例如,下面一组数据 2,  5,  67, 102, 487, 1200,  9032，中位数(`quantile="0.5"`)为102 
 
 例如：
 
@@ -427,19 +430,91 @@ go_gc_duration_seconds_sum 0.001557791
 go_gc_duration_seconds_count 10
 ```
 
-说明
+从上面的样本
 
-- `go`语言`gc`进行了`10`次，总耗时` 0.001557791s`
-- 中位数(`quantile="0.5"`)耗时`0.000167125s`; `7.5`位数(`quantile="0.75"`)耗时`0.000247333s`
-
-
+- `Prometheus Server`语言`GC`进行了`10`次，总耗时` 0.001557791s`
+- 中位数(`quantile="0.5"`)耗时`0.000167125s`，即`50%` 的垃圾回收时长都小于等于`0.000167125s` ;
+- `7.5`位数(`quantile="0.75"`)耗时`0.000247333s`，即`75%` 的垃圾回收时长都小于等于`0.000247333` ;
 
 展示  
 ![go_gc_duration_seconds](./src/go_gc_duration_seconds.png " go_gc_duration_seconds")
 
 
+##### Summary计算细节
+
+官方文档上有这么一行表述
+```
+streaming φ-quantiles (0 ≤ φ ≤ 1) of observed events, exposed as <basename>{quantile="<φ>"}
+```
+
+1. 最多使用近`10分钟`的数据进行计算
+
+  客户端计算`Summary`的时候，最多使用近[10分钟](https://github.com/prometheus/client_golang/blob/main/prometheus/summary.go#L75)的数据进行计算，不是将服务全时段的数据进行计算。
+
+​	因为时间越接近，数据的相关性越大。例如预测学生高考成绩，我们优选选择高三成绩作为样本去分析，而不是选择小学成绩去分析。
 
 
+2. 误差
+
+  表述里有`φ-quantiles (0 ≤ φ ≤ 1)`  表示误差，表示误差允许偏移几个分位数，准确的表述 `φ ± quantiles`
+
+​	例如上例中，如果设置 `quantile="0.75"`的允许误差是 `0.05`，分位数在 `(0.70, 0.80)`范围内都是可以接受的。
+
+``````
+go_gc_duration_seconds{quantile="0.75"} 0.000247333
+``````
+
+​	表示：`0.000247333`  表示`go_gc_duration_seconds` 分位数在 `(0.70, 0.80)`范围内。
+
+​	那么怎么设置误差呢？在客户端的代码里写死的。
+
+​	下面是一段被监控服务的代码：
+
+``````go
+	respDurations = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "tyltr_request_duration",
+			Help:       "响应时间",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{"path"},
+	)
+``````
+
+
+
+`Objectives` 就表示分位数和误差
+
+- 中位数`0.5` 允许误差是`0.05`的分位数,即误差范围:`(0.45,0.55)`
+
+- `0.9`分位 允许误差是`0.01`个分位数 ,即误差范围:`(0.89,0.91)`
+
+- `0.99`分位 允许误差是`0.001`个分位数，即误差范围:`(0.989,0.991)`
+
+  
+
+#### Histogram与 Summary对比
+
+- 被监控服务统计时，`Summary`结构有频繁的全局锁操作， `Histogram` 仅仅对每个桶做一个原子变量的计数。
+
+- 通过`Histogram`计算分位数是由服务端计算出来的，`Summary`是由客户端计算出来的。
+
+- `Summary` 的百分位是提前在客户端代码里指定的，在服务端观测指标数据时不能获取未指定的分为数。而 `Histogram` 则可以通过 `promql` 随便指定，虽然计算的不如 `Summary` 准确，但带来了灵活性。
+
+- `Summary` 是不能聚合的。例如两个服务A、B 请求时延分别是：
+
+  服务A:   `0.5s`、`0.25s` 、`0.21s`、`0.45s` 、`0.31s`   接受5次请求，那么中位数是`0.31s` 
+
+  服务B:   `0.05s`、`0.015s` 、`0.001s`、`0.003s` 、`0.1s` 、`0.002s` 、`0.006s`    接受7次请求，那么中位数是`0.006s` 
+
+  ❌如果使用`(0.31s +0.006s)/2 `  来聚合整体的中位数就大错特错了❌。
+
+
+
+官方给了两条建议
+
+1. 如果需要聚合，选择 `Histogram`。
+2. 如果比较清楚要观测的指标的范围和分布情况，选择 `Histogram`。如果需要精确的分位数选择 `Summary`。
 
 
 
