@@ -1,4 +1,6 @@
-# fastHTTP为什么那么快？
+# fasthttp为什么那么快?
+
+`fasthttp`并不是万金油。
 
 ## HTTP框架的原理
 
@@ -6,4 +8,7 @@
 
 <img src='./src/HTTP框架的原理.drawio.png'>
 
-对应服务端，通过`TCP`获取数据之后，需要以
+`http server`工作流程：
+
+1. 创建`socket`、绑定端口并监听、建立`TCP`链接和获取数据.
+2. 按照`http`协议的格式解析获取到的数据，解析失败则反汇编
