@@ -6,7 +6,7 @@
 
 `fasthttp`和标准库`net/http`的主要区别：
 
-- `fasthttp` 不支持请求的路由功能。如果用路由功能，要么使用第三方依赖，要么自己实现。
+- `fasthttp` 不支持请求的路由功能。如果用路由功能，要么使用第三方依赖，要么自己实现。对于
 
   ``````go
   // net/http code
@@ -22,7 +22,7 @@
 
   ``````go
   // the corresponding fasthttp code
-  m := func(ctx *fasthttp.RequestCtx) {
+  handler := func(ctx *fasthttp.RequestCtx) {
   	switch string(ctx.Path()) {
   	case "/foo/name":
   		fooHandlerFunc(ctx)
@@ -35,7 +35,7 @@
   	}
   }
   
-  fasthttp.ListenAndServe(":80", m)
+  fasthttp.ListenAndServe(":80", handler)
   ``````
 
 - `fasthttp`  与标准库`net/http`的`API` 是不相同的，所以两者不能平替。
