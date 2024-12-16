@@ -48,12 +48,7 @@
 
 > [!NOTE]
 >
-> `fasthttp` 是和标准库`net/http`对标的。工作中，常用的`web` 框架，例如`Gin`、  `Fiber` 分别是基于`net/http`和`fasthttp`实现的。`fasthttp` 参与的阶段：
->
-> - 创建`socket`、 监听`TCP`链接、在`TCP`获取字节流；
-> - 按照`http`协议解析获取到的字节流;
-> - 处理`http`请求和响应
-
+> `fasthttp` 是和标准库`net/http`对标的。工作中，常用的`web` 框架，例如`Gin`、  `Fiber` 分别是基于`net/http`和`fasthttp`实现的。
 
 
 
@@ -68,7 +63,7 @@
 
 1. 创建`socket`、绑定端口并监听、循环获取请求的字节流;
 2. 按照`http`协议的格式解析获取到的数据，解析失败，返回用户错误信息；
-3. 根据`Method`和`URL` 将请求路由到处理函数;
+3. 根据`Method`和`URL`将请求路由到处理函数;
 4. 处理请求,并响应。
 
 
