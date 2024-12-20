@@ -1,0 +1,13 @@
+@hostname = 127.0.0.1
+@port = 9101
+@host = {{hostname}}:{{port}}
+@contentType = application/json
+@createdAt = {{datetime iso8601}}
+@noCache = no-cache
+
+
+####
+GET  /metrics
+Host: {{host}}
+Content-Type: {{contentType}}
+Cache-Control: {{noCache}}

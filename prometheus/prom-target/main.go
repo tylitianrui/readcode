@@ -85,7 +85,9 @@ func PrometheusRequestTotalMiddleWare(c *gin.Context) {
 	path := c.Request.URL.Path
 	c.Next()
 	code := c.Writer.Status()
-	requestTotal.WithLabelValues(meth, path, fmt.Sprintf("%d", code)).Add(1)
+	val := fmt.Sprintf("%d", code)
+	a := requestTotal.WithLabelValues(meth, path, val)
+	a.Add(1)
 }
 
 // 统计 http请求
