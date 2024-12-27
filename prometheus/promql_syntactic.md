@@ -170,9 +170,7 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 ### 比较运算符
 
-`prometheus`支持比较算符有6种：等于(`==`)、不等于(`!=`)、大于(`>`)、大于等于(`>=`)、小于(`<`)、小于等于(`<=`)。只能使用于`instant vector`(即时向量) 和 `Scalar`(标量)的运算，不能用于`Range vector`（范围向量)。
-
-日常工作中，关键字`bool` 经常配合比较运算符使用。`bool`关键字会直接跟在比较运算符之后，如果比较运算为`true`，则返回`1`.否则返回`0`。很适合告警的场景中。在告警场景中,并不需要关心指标值具体是多少，只需关心是否触发告警(即：`true` 或 `false`) 即可。具体应用细节会在[告警](./告警.md)说明。
+`PromQL`支持比较算符有6种：等于(`==`)、不等于(`!=`)、大于(`>`)、大于等于(`>=`)、小于(`<`)、小于等于(`<=`)。只能使用于`instant vector`(即时向量) 和 `Scalar`(标量)的运算，不能用于`Range vector`（范围向量)。
 
 <br>
 
@@ -188,7 +186,11 @@ prometheus_http_requests_total{handler=~ "/api/v1/.+"}[30s]
 
 工作中，比较运算符最常用在错误率统计、告警这类场景中。一般情况下，这类场景都会设定一个阈值。
 
-下面我们在在监控面板上查询 接口状态码非`200`并且 `qps`大于10的请求，查询语句`irate(prometheus_http_requests_total{code != "200"}[5m]) > 10`
+下面我们在监控面板上查询: 接口状态码非`200`并且 `qps`大于10的请求，查询语句
+
+``````shell
+irate(prometheus_http_requests_total{code != "200"}[5m]) > 10
+``````
 
 `prometheus` 提供很多[API](https://prometheus.io/docs/prometheus/2.53/querying/api/) ，我们任选一个模拟参数错误的请求。例如获取即时向量的接口`GET /api/v1/query`   人为地传递错误的参数,如下：
 
@@ -198,20 +200,9 @@ curl  http://127.0.0.1:9090/api/v1/query  -i
 
 
 
-批量地发送上面请求
-
-``````shell
-``````
-
-
-
-语句`irate(prometheus_http_requests_total{code != "200"}[5m])` 执行效果，如下图：
+内层语句`irate(prometheus_http_requests_total{code != "200"}[5m])` 执行效果，如下图：
 
 <img src="./src/prometheus_http_requests_total_error.png" width="100%" height="60%" alt="offset结果示意图">
-
-
-
-
 
 语句`irate(prometheus_http_requests_total{code != "200"}[5m]) > 10`  执行效果，如下图：
 
@@ -222,6 +213,8 @@ curl  http://127.0.0.1:9090/api/v1/query  -i
 
 
 #### **示例3:** bool配合比较运算符使用
+
+日常工作中，关键字`bool` 经常配合比较运算符使用。`bool`关键字会直接跟在比较运算符之后，如果比较运算为`true`，则返回`1`.否则返回`0`。很适合告警的场景中。在告警场景中,并不需要关心指标值具体是多少，只需关心是否触发告警(即：`true` 或 `false`) 即可。具体应用细节会在[告警](./告警.md)说明。
 
 语句``irate(prometheus_http_requests_total{code != "200"}[5m])> bool 10`表示 只有状态码不是`200` 并且`QPS`超过10，才返回`1`；否则返回`0`。 
 
